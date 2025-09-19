@@ -13,4 +13,5 @@ class Customer {
     return $res[0] ? ($res[1][0] ?? null) : null;
   }
 }
+
 ?>

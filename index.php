@@ -5,13 +5,21 @@
   <title>Home</title>
   <!-- Tailwind (CDN, no build step) -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <?php session_start(); $me = $_SESSION['customer'] ?? null; ?>
+
 </head>
 <body class="min-h-screen flex items-center justify-center p-6" style="background:linear-gradient(135deg,#ede9fe,#dbeafe)">
   <!-- top right nav -->
-  <div class="absolute top-4 right-4 flex gap-3">
+  <div class="absolute top-4 right-4 flex gap-3 items-center">
+  <?php if ($me): ?>
+    <span class="text-gray-700 text-sm">Hi, <?= htmlspecialchars($me['name'] ?? 'User') ?></span>
+    <a href="actions/logout_action.php" class="text-gray-700 hover:text-gray-900 text-sm font-medium">Logout</a>
+  <?php else: ?>
     <a href="public/register.php" class="text-gray-700 hover:text-gray-900 text-sm font-medium">Register</a>
     <a href="public/login.php" class="text-gray-700 hover:text-gray-900 text-sm font-medium">Login</a>
-  </div>
+  <?php endif; ?>
+ </div>
+
 
   <div class="w-full max-w-xl">
     <div class="bg-white/95 backdrop-blur rounded-2xl shadow-xl border border-gray-100 p-10 text-center">
