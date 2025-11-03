@@ -1,20 +1,31 @@
 <?php
-// File: auth_lab_dbforlab/actions/login_action.php
-// NOTE: AJAX endpoint—always returns JSON; frontend will redirect after parsing.
-declare(strict_types=1);
-header('Content-Type: application/json; charset=utf-8');
-
-if (session_status() === PHP_SESSION_NONE) { session_start(); }
+require_once __DIR__ . '/../settings/db_cred.php';
+require_once __DIR__ . '/../settings/core.php';
 require_once __DIR__ . '/../controllers/customer_controller.php';
 
-$email    = isset($_POST['email']) ? trim((string)$_POST['email']) : '';
-$password = isset($_POST['password']) ? (string)$_POST['password'] : '';
+header('Content-Type: application/json');
 
-[$ok, $payload] = login_customer_ctr($email, $password);
-
-if ($ok) {
-  // $payload should be ['id'=>int,'role'=>int,'message'=>'Logged in']
-  echo json_encode(['success' => true, 'data' => $payload], JSON_UNESCAPED_UNICODE);
-} else {
-  echo json_encode(['success' => false, 'message' => (string)$payload], JSON_UNESCAPED_UNICODE);
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    json_response(false, 'Invalid request method');
 }
+
+$email = sanitize($_POST['email'] ?? '');
+$password = $_POST['password'] ?? '';
+
+$controller = new CustomerController();
+$result = $controller->login($email, $password);
+
+if ($result['success']) {
+    $_SESSION['customer'] = $result['data'];
+    
+    // Also set individual session variables for compatibility
+    $_SESSION['user_id'] = $result['data']['customer_id'];
+    $_SESSION['user_email'] = $result['data']['customer_email'];
+    $_SESSION['user_name'] = $result['data']['customer_name'];
+    $_SESSION['user_role'] = $result['data']['user_role'];
+    
+    json_response(true, 'Login successful', $result['data']);
+} else {
+    json_response(false, $result['message']);
+}
+?>

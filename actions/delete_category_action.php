@@ -1,20 +1,18 @@
 <?php
-declare(strict_types=1);
-header('Content-Type: application/json');
-
+require_once __DIR__ . '/../settings/db_cred.php';
 require_once __DIR__ . '/../settings/core.php';
+require_once __DIR__ . '/../controllers/category_controller.php';
+
+header('Content-Type: application/json');
 require_admin();
-require_once __DIR__ . '/../settings/db_class.php';
 
-$id = (int)($_POST['category_id'] ?? $_POST['cat_id'] ?? 0);
-if ($id <= 0) { echo json_encode(['success'=>false,'message'=>'Invalid category']); exit; }
-
-try {
-  $db = new DB();
-  $ok = $db->write("DELETE FROM categories WHERE cat_id = ?", [$id], "i");
-  if (!$ok) throw new Exception('Delete failed');
-
-  echo json_encode(['success'=>true, 'message'=>'Category deleted successfully']);
-} catch (Throwable $e) {
-  echo json_encode(['success'=>false, 'message'=>'Could not delete category']);
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    json_response(false, 'Invalid request method');
 }
+
+$id = (int)($_POST['id'] ?? 0);
+$controller = new CategoryController();
+$result = $controller->delete($id);
+
+json_response($result['success'], $result['message']);
+?>

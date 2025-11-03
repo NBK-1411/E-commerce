@@ -1,34 +1,29 @@
 <?php
-// File: auth_lab_dbforlab/actions/register_customer_action.php
-// NOTE: AJAX endpoint—always returns JSON; frontend will redirect.
-declare(strict_types=1);
-header('Content-Type: application/json; charset=utf-8');
-
+require_once __DIR__ . '/../settings/db_cred.php';
+require_once __DIR__ . '/../settings/core.php';
 require_once __DIR__ . '/../controllers/customer_controller.php';
 
-try {
-  $ct = $_SERVER['CONTENT_TYPE'] ?? '';
-  if (is_string($ct) && stripos($ct, 'application/json') !== false) {
-    $raw = file_get_contents('php://input');
-    $in  = json_decode($raw, true) ?: [];
-  } else {
-    $in = $_POST;
-  }
+header('Content-Type: application/json');
 
-  $payload = [
-    'name'     => trim($in['full_name'] ?? $in['customer_name'] ?? $in['name'] ?? ''),
-    'email'    => trim($in['email'] ?? ''),
-    'password' => (string)($in['password'] ?? ''),
-    'country'  => trim($in['country'] ?? ''),
-    'city'     => trim($in['city'] ?? ''),
-    'contact'  => trim($in['contact'] ?? $in['contact_number'] ?? $in['phone'] ?? ''),
-  ];
-
-  [$ok, $msg] = register_customer_ctr($payload);
-  echo json_encode([
-    'success' => $ok,
-    'message' => $msg,
-  ], JSON_UNESCAPED_UNICODE);
-} catch (Throwable $e) {
-  echo json_encode(['success' => false, 'message' => 'Server error during registration']);
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    echo json_encode(['success' => false, 'message' => 'Invalid request method']);
+    exit;
 }
+
+try {
+    $name = sanitize($_POST['name'] ?? '');
+    $email = sanitize($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $country = sanitize($_POST['country'] ?? '');
+    $city = sanitize($_POST['city'] ?? '');
+    $contact = sanitize($_POST['contact'] ?? '');
+
+    $controller = new CustomerController();
+    $result = $controller->register($name, $email, $password, $country, $city, $contact);
+
+    echo json_encode($result);
+} catch (Exception $e) {
+    echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
+}
+exit;
+?>

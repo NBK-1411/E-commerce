@@ -1,7 +1,7 @@
 <?php
-// Uses dbforlab as requested
-if (!defined('SERVER'))   define('SERVER','localhost');
-if (!defined('USERNAME')) define('USERNAME','root');
-if (!defined('PASSWD'))   define('PASSWD','');
-if (!defined('DATABASE')) define('DATABASE','dbforlab');
+define('DB_HOST', 'localhost');
+define('DB_USER', 'root');
+define('DB_PASS', '');
+define('DB_NAME', 'dbforlab');
+define('DB_PORT', 3306);
 ?>

@@ -1,68 +1,93 @@
 <?php
-require_once __DIR__ . '/db_cred.php';
+class Database {
+    private $host = DB_HOST;
+    private $user = DB_USER;
+    private $pass = DB_PASS;
+    private $db_name = DB_NAME;
+    private $port = DB_PORT;
+    private $conn;
+    private $stmt;
 
-class DB {
-  public $conn;
-
-  function __construct(){
-    $this->conn = mysqli_connect(SERVER, USERNAME, PASSWD, DATABASE);
-    if (!$this->conn) {
-      die('DB connection failed: ' . mysqli_connect_error());
-    }
-    mysqli_set_charset($this->conn, 'utf8mb4');
-  }
-
-  // SELECT
-  function read($sql, $params = [], $types = ''){
-    $stmt = mysqli_prepare($this->conn, $sql);
-    if(!$stmt){ return [false, mysqli_error($this->conn)]; }
-
-    if($params){
-      if($types === ''){
-        $t = '';
-        foreach($params as $p){
-          $t .= is_int($p) ? 'i' : (is_float($p) ? 'd' : 's');
+    public function connect() {
+        $this->conn = new mysqli($this->host, $this->user, $this->pass, $this->db_name, $this->port);
+        
+        if ($this->conn->connect_error) {
+            die('Connection Error: ' . $this->conn->connect_error);
         }
-        $types = $t;
-      }
-      mysqli_stmt_bind_param($stmt, $types, ...$params);
+        
+        return $this->conn;
     }
 
-    if(!mysqli_stmt_execute($stmt)){
-      $err = mysqli_stmt_error($stmt);
-      mysqli_stmt_close($stmt);
-      return [false, $err];
-    }
-
-    $result = mysqli_stmt_get_result($stmt);
-    $rows = [];
-    if($result){
-      while($r = mysqli_fetch_assoc($result)){ $rows[] = $r; }
-      mysqli_free_result($result);
-    }
-    mysqli_stmt_close($stmt);
-    return [true, $rows];
-  }
-
-  // INSERT / UPDATE / DELETE
-  function write($sql, $params = [], $types = ''){
-    $stmt = mysqli_prepare($this->conn, $sql);
-    if(!$stmt){ return false; }
-
-    if($params){
-      if($types === ''){
-        $t = '';
-        foreach($params as $p){
-          $t .= is_int($p) ? 'i' : (is_float($p) ? 'd' : 's');
+    public function write($query, $types = '', $params = []) {
+        $this->stmt = $this->conn->prepare($query);
+        
+        if (!$this->stmt) {
+            return ['success' => false, 'message' => 'Prepare failed: ' . $this->conn->error];
         }
-        $types = $t;
-      }
-      mysqli_stmt_bind_param($stmt, $types, ...$params);
+        
+        if (!empty($params)) {
+            $this->stmt->bind_param($types, ...$params);
+        }
+        
+        if ($this->stmt->execute()) {
+            return ['success' => true, 'message' => 'Operation successful', 'insert_id' => $this->stmt->insert_id];
+        } else {
+            return ['success' => false, 'message' => 'Execute failed: ' . $this->stmt->error];
+        }
     }
 
-    $ok = mysqli_stmt_execute($stmt);
-    mysqli_stmt_close($stmt);
-    return (bool)$ok;
-  }
+    public function read($query, $types = '', $params = []) {
+        try {
+            if (!$this->conn) {
+                $this->connect();
+            }
+            
+            $this->stmt = $this->conn->prepare($query);
+            
+            if (!$this->stmt) {
+                error_log("Database read prepare failed: " . $this->conn->error . " | Query: " . $query);
+                return [];
+            }
+            
+            if (!empty($params)) {
+                $this->stmt->bind_param($types, ...$params);
+            }
+            
+            if (!$this->stmt->execute()) {
+                error_log("Database read execute failed: " . $this->stmt->error . " | Query: " . $query);
+                return [];
+            }
+            
+            $result = $this->stmt->get_result();
+            
+            if (!$result) {
+                error_log("Database read get_result failed: " . $this->conn->error);
+                return [];
+            }
+            
+            $data = [];
+            while ($row = $result->fetch_assoc()) {
+                $data[] = $row;
+            }
+            
+            return $data;
+        } catch (Exception $e) {
+            error_log("Database read exception: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function getConnection() {
+        return $this->conn;
+    }
+
+    public function close() {
+        if ($this->stmt) {
+            $this->stmt->close();
+        }
+        if ($this->conn) {
+            $this->conn->close();
+        }
+    }
 }
 ?>

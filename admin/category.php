@@ -1,213 +1,211 @@
 <?php
-// Admin-only guard
+require_once __DIR__ . '/../settings/db_cred.php';
 require_once __DIR__ . '/../settings/core.php';
-require_admin();
+
+// Lab requirement: Check if user is logged in
+if (!is_logged_in()) {
+    header('Location: ../login.php');
+    exit;
+}
+
+// Lab requirement: Check if user is admin, if not redirect to login
+if (!is_admin()) {
+    header('Location: ../login.php');
+    exit;
+}
+
+$user = get_current_customer();
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Admin Categories Management</title>
-    <style>
-        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height:100vh; padding:20px; }
-        .container { max-width:1200px; margin:0 auto; }
-        .admin-panel { background:white; border-radius:16px; box-shadow:0 20px 40px rgba(0,0,0,0.1); overflow:hidden; }
-        .header { background:linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color:white; padding:30px 40px; text-align:center; }
-        .header h1 { font-size:2.5rem; font-weight:700; margin-bottom:10px; }
-        .header p { opacity:0.9; font-size:1.1rem; }
-        .main-content { display:flex; min-height:500px; }
-        .form-section { flex:1; padding:40px; border-right:1px solid #e5e7eb; }
-        .categories-section { flex:1; padding:40px; }
-        .section-title { font-size:1.5rem; font-weight:600; color:#1f2937; margin-bottom:25px; padding-bottom:15px; border-bottom:2px solid #e5e7eb; }
-        .form-group { margin-bottom:20px; }
-        .form-group label { display:block; margin-bottom:8px; font-weight:600; color:#374151; }
-        .form-group input { width:100%; padding:12px 16px; border:2px solid #e5e7eb; border-radius:8px; font-size:1rem; transition:border-color .3s ease; }
-        .form-group input:focus { outline:none; border-color:#4f46e5; box-shadow:0 0 0 3px rgba(79,70,229,.1); }
-        .form-actions { display:flex; gap:12px; margin-top:20px; }
-        .btn { padding:12px 24px; border:none; border-radius:8px; font-size:1rem; font-weight:600; cursor:pointer; transition:all .3s ease; }
-        .btn-primary { background:linear-gradient(135deg,#4f46e5 0%, #7c3aed 100%); color:white; }
-        .btn-primary:hover { transform:translateY(-2px); box-shadow:0 10px 20px rgba(79,70,229,.3); }
-        .btn-secondary { background:#6b7280; color:white; }
-        .btn-secondary:hover { background:#4b5563; }
-        .btn-danger { background:#ef4444; color:white; }
-        .btn-danger:hover { background:#dc2626; }
-        .category-list { display:flex; flex-direction:column; gap:15px; }
-        .category-item { background:#f9fafb; border:2px solid #e5e7eb; border-radius:12px; padding:20px; display:flex; justify-content:space-between; align-items:center; transition:all .3s ease; }
-        .category-item:hover { border-color:#4f46e5; transform:translateX(5px); }
-        .category-name { font-size:1.1rem; font-weight:600; color:#1f2937; }
-        .category-actions { display:flex; gap:10px; }
-        .category-actions button { padding:8px 16px; border:none; border-radius:6px; font-size:.9rem; font-weight:600; cursor:pointer; transition:all .2s ease; }
-        .edit-btn { background:#3b82f6; color:white; }
-        .edit-btn:hover { background:#2563eb; }
-        .delete-btn { background:#ef4444; color:white; }
-        .delete-btn:hover { background:#dc2626; }
-        .empty-state { text-align:center; padding:40px; color:#6b7280; }
-        .empty-state p { font-size:1.1rem; margin-top:10px; }
-        .notification { position:fixed; top:20px; right:20px; padding:16px 24px; border-radius:8px; color:white; font-weight:600; box-shadow:0 10px 25px rgba(0,0,0,0.1); transform:translateX(200%); transition:transform .3s ease; z-index:1000; }
-        .notification.show { transform:translateX(0); }
-        .notification.success { background:linear-gradient(135deg, #10b981 0%, #059669 100%); }
-        .notification.error { background:linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
-        @media (max-width:768px){ .main-content{flex-direction:column;} .form-section{border-right:none; border-bottom:1px solid #e5e7eb;} .header h1{font-size:2rem;} }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Categories - Admin</title>
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../admin-styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
-<body>
-<div class="container">
-  <div class="admin-panel">
-    <div class="header">
-      <h1>Categories Management</h1>
-      <p>Manage your website categories efficiently</p>
-      <!-- Logout button (top-right) -->
-        <a href="../actions/logout.php"
-            class="btn btn-secondary"
-            style="position:absolute; top:16px; right:16px; text-decoration:none; display:inline-block;">
-            Logout
-        </a>
-    </div>
-
-    <div class="main-content">
-      <div class="form-section">
-        <h2 class="section-title">Add/Edit Category</h2>
-        <form id="categoryForm">
-          <input type="hidden" id="categoryId" value="">
-          <div class="form-group">
-            <label for="categoryName">Category Name</label>
-            <input type="text" id="categoryName" placeholder="Enter category name" required />
-          </div>
-          <div class="form-actions">
-            <button type="submit" class="btn btn-primary">Save Category</button>
-            <button type="button" id="resetBtn" class="btn btn-secondary">Reset</button>
-          </div>
-        </form>
-      </div>
-
-      <div class="categories-section">
-        <h2 class="section-title">Existing Categories</h2>
-        <div id="categoriesList" class="category-list"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div id="notification" class="notification"></div>
-
-<script>
-  // DOM refs
-  const categoryForm = document.getElementById('categoryForm');
-  const categoryIdInput = document.getElementById('categoryId');
-  const categoryNameInput = document.getElementById('categoryName');
-  const resetBtn = document.getElementById('resetBtn');
-  const categoriesList = document.getElementById('categoriesList');
-  const notification = document.getElementById('notification');
-
-  // Helpers
-  function showNotification(message, type) {
-    notification.textContent = message;
-    notification.className = `notification ${type} show`;
-    setTimeout(() => notification.classList.remove('show'), 2500);
-  }
-  function resetForm() {
-    categoryIdInput.value = '';
-    categoryNameInput.value = '';
-    categoryNameInput.focus();
-  }
-  function escapeHTML(s){return String(s).replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));}
-
-  // Render list
-  function renderCategories(rows) {
-    if (!rows || rows.length === 0) {
-      categoriesList.innerHTML = `
-        <div class="empty-state">
-          <h3>No categories found</h3>
-          <p>Add your first category using the form above</p>
-        </div>`;
-      return;
-    }
-    categoriesList.innerHTML = rows.map(c => `
-      <div class="category-item" data-id="${c.category_id}">
-        <span class="category-name">${escapeHTML(c.category_name || '')}</span>
-        <div class="category-actions">
-          <button class="edit-btn" data-action="edit">Edit</button>
-          <button class="delete-btn" data-action="delete">Delete</button>
+<body class="admin-body">
+    <!-- Admin Sidebar -->
+    <aside class="admin-sidebar">
+        <div class="admin-logo">
+            <h1>ESSENCE</h1>
+            <p class="admin-label">Admin Panel</p>
         </div>
-      </div>
-    `).join('');
-  }
+        
+        <nav class="admin-nav">
+            <a href="../admin.php" class="admin-nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                <span>Dashboard</span>
+            </a>
+            
+            <a href="perfume.php" class="admin-nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                </svg>
+                <span>Products</span>
+            </a>
+            
+            <a href="category.php" class="admin-nav-item active">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                <span>Categories</span>
+            </a>
+            
+            <a href="brand.php" class="admin-nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                    <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                </svg>
+                <span>Brands</span>
+            </a>
+        </nav>
+        
+        <div class="admin-sidebar-footer">
+            <a href="../index.php" class="admin-nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                <span>View Store</span>
+            </a>
+            <a href="../actions/logout.php" class="admin-nav-item">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                <span>Logout</span>
+            </a>
+        </div>
+    </aside>
 
-  // API
-  async function loadCategories() {
-    try {
-      const res = await fetch('../actions/fetch_category_action.php', { method:'POST' });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.message || 'Failed to load');
-      renderCategories(data.data || []);
-    } catch (e) {
-      renderCategories([]);
-      showNotification(e.message || 'Error loading categories', 'error');
-    }
-  }
-  async function addCategory(name) {
-    const fd = new FormData(); fd.append('category_name', name);
-    const res = await fetch('../actions/add_category_action.php', { method:'POST', body:fd });
-    return res.json();
-  }
-  async function updateCategory(id, name) {
-    const fd = new FormData(); fd.append('category_id', id); fd.append('category_name', name);
-    const res = await fetch('../actions/update_category_action.php', { method:'POST', body:fd });
-    return res.json();
-  }
-  async function deleteCategory(id) {
-    const fd = new FormData(); fd.append('category_id', id);
-    const res = await fetch('../actions/delete_category_action.php', { method:'POST', body:fd });
-    return res.json();
-  }
+    <!-- Main Content -->
+    <main class="admin-main">
+        <!-- Top Bar -->
+        <header class="admin-header">
+            <div class="admin-header-left">
+                <button class="admin-menu-toggle" aria-label="Toggle menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <h2 class="admin-page-title">Category Management</h2>
+            </div>
+            
+            <div class="admin-header-right">
+                <div class="admin-search">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    <input type="text" placeholder="Search...">
+                </div>
+                
+                <button class="admin-icon-btn" aria-label="Notifications">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                    <span class="notification-badge">3</span>
+                </button>
+                
+                <div class="admin-user">
+                    <img src="/placeholder.svg?height=40&width=40" alt="Admin">
+                    <div class="admin-user-info">
+                        <span class="admin-user-name"><?php echo htmlspecialchars(get_current_customer()['customer_name'] ?? 'Admin'); ?></span>
+                        <span class="admin-user-role">Administrator</span>
+                    </div>
+                </div>
+            </div>
+        </header>
 
-  // Events
-  document.addEventListener('DOMContentLoaded', loadCategories);
+        <!-- Dashboard Content -->
+        <div class="admin-content">
+            <!-- Add Category Form -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title">Add New Category</h3>
+                </div>
+                <div class="admin-card-body">
+                    <form id="addCategoryForm" class="admin-form">
+                        <div class="form-grid">
+                            <div class="form-group full-width">
+                                <label for="categoryName" class="form-label">Category Name</label>
+                                <input type="text" id="categoryName" name="name" placeholder="Category name" required class="form-input">
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Add Category</button>
+                        </div>
+                    </form>
+                    <div id="addMessage" class="hidden mt-4"></div>
+                </div>
+            </div>
 
-  categoryForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const id = categoryIdInput.value.trim();
-    const name = categoryNameInput.value.trim();
-    if (!name) return showNotification('Category name cannot be empty!', 'error');
+            <!-- Edit Category Form (Lab requirement: UPDATE form) -->
+            <div id="editCategoryForm" class="admin-card hidden">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title">Edit Category</h3>
+                </div>
+                <div class="admin-card-body">
+                    <form id="updateCategoryForm" class="admin-form">
+                        <div class="form-grid">
+                            <div class="form-group full-width">
+                                <input type="hidden" id="editCategoryId" name="id">
+                                <label for="editCategoryName" class="form-label">Category Name</label>
+                                <input type="text" id="editCategoryName" name="name" placeholder="Category name" required class="form-input">
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Update Category</button>
+                            <button type="button" onclick="cancelEdit()" class="btn btn-secondary">Cancel</button>
+                        </div>
+                    </form>
+                    <div id="updateMessage" class="hidden mt-4"></div>
+                </div>
+            </div>
 
-    try {
-      const resp = id ? await updateCategory(id, name) : await addCategory(name);
-      if (!resp.success) throw new Error(resp.message || 'Operation failed');
-      showNotification(resp.message || (id ? 'Category updated' : 'Category added'), 'success');
-      resetForm(); loadCategories();
-    } catch (err) {
-      showNotification(err.message || 'Request failed', 'error');
-    }
-  });
+            <!-- Categories Table -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title">Categories</h3>
+                </div>
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categoriesTable">
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
 
-  resetBtn.addEventListener('click', resetForm);
-
-  categoriesList.addEventListener('click', async (e) => {
-    const btn = e.target.closest('button'); if (!btn) return;
-    const row = e.target.closest('.category-item'); if (!row) return;
-    const id = row.getAttribute('data-id');
-
-    if (btn.dataset.action === 'edit') {
-      const name = row.querySelector('.category-name').textContent;
-      categoryIdInput.value = id;
-      categoryNameInput.value = name;
-      categoryNameInput.focus();
-    }
-    if (btn.dataset.action === 'delete') {
-      if (!confirm('Are you sure you want to delete this category?')) return;
-      try {
-        const resp = await deleteCategory(id);
-        if (!resp.success) throw new Error(resp.message || 'Delete failed');
-        showNotification(resp.message || 'Category deleted', 'success');
-        if (categoryIdInput.value === id) resetForm();
-        loadCategories();
-      } catch (err) {
-        showNotification(err.message || 'Delete failed', 'error');
-      }
-    }
-  });
-</script>
+    <script src="../public/js/category.js"></script>
+    <script src="../admin-script.js"></script>
 </body>
 </html>
