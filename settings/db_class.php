@@ -1,4 +1,9 @@
 <?php
+// Ensure database credentials are loaded before using constants
+if (!defined('DB_HOST')) {
+    require_once __DIR__ . '/db_cred.php';
+}
+
 class Database {
     private $host = DB_HOST;
     private $user = DB_USER;
