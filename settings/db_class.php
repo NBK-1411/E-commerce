@@ -9,12 +9,11 @@ class Database {
     private $user = DB_USER;
     private $pass = DB_PASS;
     private $db_name = DB_NAME;
-    private $port = DB_PORT;
     private $conn;
     private $stmt;
 
     public function connect() {
-        $this->conn = new mysqli($this->host, $this->user, $this->pass, $this->db_name, $this->port);
+        $this->conn = new mysqli($this->host, $this->user, $this->pass, $this->db_name);
         
         if ($this->conn->connect_error) {
             die('Connection Error: ' . $this->conn->connect_error);
