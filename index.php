@@ -247,7 +247,7 @@ if (isset($_GET['welcome']) && $_GET['welcome'] == 1 && is_logged_in()) {
                         <a href="<?php echo $categoryLink; ?>" class="category-card">
                             <div class="category-image">
                                 <?php if (!empty($category['image'])): ?>
-                                    <img src="<?php echo htmlspecialchars($category['image']); ?>" alt="<?php echo htmlspecialchars($category['name']); ?>">
+                                    <img src="<?php echo htmlspecialchars(normalize_image_path($category['image'])); ?>" alt="<?php echo htmlspecialchars($category['name']); ?>">
                                 <?php else: ?>
                                     <img src="/placeholder.svg?height=400&width=350" alt="<?php echo htmlspecialchars($category['name']); ?>">
                                 <?php endif; ?>
@@ -282,33 +282,7 @@ if (isset($_GET['welcome']) && $_GET['welcome'] == 1 && is_logged_in()) {
                     <div class="product-card">
                         <div class="product-image">
                             <?php if (!empty($perfume['image'])): ?>
-                                <?php
-                                // Fix image path - handle various path formats and ensure proper base path
-                                $imagePath = trim($perfume['image']);
-                                
-                                // If it's already a full URL (http/https), use as-is
-                                if (substr($imagePath, 0, 4) === 'http') {
-                                    // Keep as-is
-                                }
-                                // If path starts with /uploads/, prepend base path to make it work from project root
-                                elseif (substr($imagePath, 0, 9) === '/uploads/') {
-                                    $imagePath = $base_path . $imagePath;
-                                }
-                                // If path starts with /, prepend base path (unless it's already a full URL)
-                                elseif (substr($imagePath, 0, 1) === '/') {
-                                    $imagePath = $base_path . $imagePath;
-                                }
-                                // If path doesn't start with /, add base path and /
-                                else {
-                                    $imagePath = $base_path . '/' . $imagePath;
-                                }
-                                
-                                // If path starts with /public/, remove it since we're at root
-                                if (substr($imagePath, strlen($base_path), 8) === '/public/') {
-                                    $imagePath = $base_path . substr($imagePath, strlen($base_path) + 7); // Remove /public part
-                                }
-                                ?>
-                                <img src="<?php echo htmlspecialchars($imagePath); ?>" 
+                                <img src="<?php echo htmlspecialchars(normalize_image_path($perfume['image'])); ?>" 
                                      alt="<?php echo htmlspecialchars($perfume['name']); ?>" 
                                      onerror="this.onerror=null; this.src='<?php echo htmlspecialchars($base_path); ?>/placeholder.svg?height=400&width=300';"
                                      style="width: 100%; height: 300px; object-fit: cover;">

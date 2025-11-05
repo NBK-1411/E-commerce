@@ -129,7 +129,7 @@ if (!is_array($allCategories)) {
                         <a href="shop.php?category=<?php echo $category['id']; ?>" class="category-card">
                             <div class="category-image">
                                 <?php if (!empty($category['image'])): ?>
-                                    <img src="../<?php echo htmlspecialchars($category['image']); ?>" alt="<?php echo htmlspecialchars($category['name']); ?>">
+                                    <img src="<?php echo htmlspecialchars(normalize_image_path($category['image'])); ?>" alt="<?php echo htmlspecialchars($category['name']); ?>">
                                 <?php else: ?>
                                     <img src="/placeholder.svg?height=400&width=350" alt="<?php echo htmlspecialchars($category['name']); ?>">
                                 <?php endif; ?>

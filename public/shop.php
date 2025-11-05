@@ -307,7 +307,7 @@ if ($selected_category) {
                     <?php foreach ($perfumes as $perfume): ?>
                         <div class="product-card">
                             <?php if (!empty($perfume['image'])): ?>
-                                <img src="../<?php echo htmlspecialchars($perfume['image']); ?>" 
+                                <img src="<?php echo htmlspecialchars(normalize_image_path($perfume['image'])); ?>" 
                                      alt="<?php echo htmlspecialchars($perfume['name']); ?>" 
                                      class="product-image">
                             <?php else: ?>

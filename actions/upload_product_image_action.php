@@ -53,7 +53,9 @@ try {
     }
     
     // Lab requirement: Verify uploads folder exists (created by server admin)
-    $uploads_base = __DIR__ . '/../uploads';
+    // Use helper function to get uploads path - works on both local and live servers
+    // (core.php is already required at the top of this file)
+    $uploads_base = get_uploads_path();
     if (!is_dir($uploads_base)) {
         json_response(false, 'Uploads folder not found. Please contact server administrator', []);
         exit;
