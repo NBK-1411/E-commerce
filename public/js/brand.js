@@ -16,8 +16,9 @@ function validateBrandName(name) {
     return { valid: false, message: 'Brand name must be less than 100 characters' }
   }
   
-  // Check for valid characters (letters, numbers, spaces, hyphens, apostrophes, ampersand)
-  if (!/^[a-zA-Z0-9\s\-'&]+$/.test(name)) {
+  // Check for valid characters (letters including accented/Unicode, numbers, spaces, hyphens, apostrophes, ampersand, periods)
+  // Allow Unicode letters (including accented characters like è, é, à, etc.)
+  if (!/^[\p{L}\p{N}\s\-'&.]+$/u.test(name)) {
     return { valid: false, message: 'Brand name contains invalid characters' }
   }
   
