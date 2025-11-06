@@ -1,4 +1,14 @@
 <?php
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 0); // Don't display errors, but log them
+ini_set('log_errors', 1);
+
+// Start output buffering immediately to catch any output
+if (!ob_get_level()) {
+    ob_start();
+}
+
 // Use the same database configuration as the rest of the application
 require_once __DIR__ . '/settings/db_cred.php';
 require_once __DIR__ . '/settings/db_class.php';
@@ -9,9 +19,25 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Clear any output that might have been sent by includes
+ob_clean();
+
 // Create database connection
-$db = new Database();
-$db->connect();
+try {
+    $db = new Database();
+    $db->connect();
+} catch (Exception $e) {
+    error_log("Database connection error in authenticate.php: " . $e->getMessage());
+    error_log("Database connection error details: " . print_r($e, true));
+    ob_end_clean();
+    header('Location: signup.php?error=Database connection failed. Please try again later.');
+    exit();
+} catch (Error $e) {
+    error_log("Database connection fatal error in authenticate.php: " . $e->getMessage());
+    ob_end_clean();
+    header('Location: signup.php?error=Database connection failed. Please contact support.');
+    exit();
+}
 
 // Handle Login
 if (isset($_POST['action']) && $_POST['action'] === 'login') {
@@ -104,12 +130,19 @@ if (isset($_POST['action']) && $_POST['action'] === 'signup') {
         $check_result = $db->read($check_query, 's', [$email]);
         
         if (!empty($check_result)) {
+            error_log("Registration attempt with existing email: " . $email);
             header('Location: signup.php?error=Email already registered');
             exit();
         }
         
         // Hash password
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+        
+        if ($hashed_password === false) {
+            error_log("Password hashing failed");
+            header('Location: signup.php?error=Password hashing failed. Please try again.');
+            exit();
+        }
         
         // Default user_role is 2 (customer) - 1 is admin
         $user_role = 2;
@@ -118,6 +151,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'signup') {
         $insert_query = "INSERT INTO customer (customer_name, customer_email, customer_pass, customer_country, customer_city, customer_contact, user_role) 
                         VALUES (?, ?, ?, ?, ?, ?, ?)";
         
+        error_log("Attempting to insert customer: " . $email);
         $result = $db->write($insert_query, 'ssssssi', [
             $customer_name, 
             $email, 
@@ -130,6 +164,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'signup') {
         
         if ($result['success']) {
             $customer_id = $result['insert_id'];
+            error_log("Customer registered successfully. ID: " . $customer_id);
             
             // Auto login after signup
             $_SESSION['customer'] = [
@@ -145,21 +180,44 @@ if (isset($_POST['action']) && $_POST['action'] === 'signup') {
             $_SESSION['user_name'] = $customer_name;
             $_SESSION['user_role'] = $user_role;
             
+            error_log("Session set, redirecting to index.php");
             header('Location: index.php?welcome=1');
             exit();
         } else {
             error_log("Registration error: " . $result['message']);
-            header('Location: signup.php?error=Registration failed: ' . htmlspecialchars($result['message']));
+            error_log("Registration failed for email: " . $email);
+            header('Location: signup.php?error=Registration failed: ' . urlencode($result['message']));
             exit();
         }
     } catch (Exception $e) {
-        error_log("Registration error: " . $e->getMessage());
-        header('Location: signup.php?error=An error occurred. Please try again.');
+        error_log("Registration exception: " . $e->getMessage());
+        error_log("Stack trace: " . $e->getTraceAsString());
+        header('Location: signup.php?error=An error occurred: ' . urlencode($e->getMessage()));
+        exit();
+    } catch (Error $e) {
+        error_log("Registration fatal error: " . $e->getMessage());
+        error_log("Stack trace: " . $e->getTraceAsString());
+        header('Location: signup.php?error=A fatal error occurred. Please contact support.');
         exit();
     }
 }
 
 // If no valid action, redirect to login
-header('Location: login.php');
-exit();
+error_log("authenticate.php called without valid action. POST data: " . print_r($_POST, true));
+error_log("SERVER info: " . print_r($_SERVER, true));
+
+// Try to redirect
+if (!headers_sent()) {
+    header('Location: login.php');
+    exit();
+} else {
+    // If headers already sent, show error message
+    ob_end_clean();
+    echo "<!DOCTYPE html><html><head><title>Error</title></head><body>";
+    echo "<h1>Error</h1>";
+    echo "<p>No valid action received. Please go back to the <a href='login.php'>login page</a>.</p>";
+    echo "<p>POST data: " . htmlspecialchars(print_r($_POST, true)) . "</p>";
+    echo "</body></html>";
+    exit();
+}
 ?>
