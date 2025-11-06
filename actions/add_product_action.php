@@ -59,8 +59,9 @@ if (empty($category_ids)) {
 
 $price = (float)($_POST['price'] ?? 0);
 $description = sanitize($_POST['description'] ?? '');
-$image = sanitize($_POST['image'] ?? '');
-$image_url = sanitize($_POST['image_url'] ?? ''); // Alternative image URL
+// Don't sanitize image paths with htmlspecialchars - just trim and validate
+$image = trim($_POST['image'] ?? '');
+$image_url = trim($_POST['image_url'] ?? ''); // Alternative image URL
 $keyword = sanitize($_POST['keyword'] ?? '');
 $notes = sanitize($_POST['notes'] ?? '');
 $badge = sanitize($_POST['badge'] ?? '');

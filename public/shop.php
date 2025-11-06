@@ -309,7 +309,8 @@ if ($selected_category) {
                             <?php if (!empty($perfume['image'])): ?>
                                 <img src="<?php echo htmlspecialchars(normalize_image_path($perfume['image'])); ?>" 
                                      alt="<?php echo htmlspecialchars($perfume['name']); ?>" 
-                                     class="product-image">
+                                     class="product-image"
+                                     onerror="this.onerror=null; this.src='<?php echo htmlspecialchars($base_path); ?>/placeholder.svg?height=400&width=300';">
                             <?php else: ?>
                                 <div class="product-image-placeholder">
                                     <span>No image</span>

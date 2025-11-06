@@ -104,46 +104,56 @@ function normalize_image_path($image_path) {
         return $image_path;
     }
     
-    // Get the project root path (not the current script's directory)
-    $real_script_dir = dirname($_SERVER['SCRIPT_FILENAME']);
-    $real_doc_root = $_SERVER['DOCUMENT_ROOT'];
-    $relative_path = str_replace($real_doc_root, '', $real_script_dir);
+    // Get the project root path using SCRIPT_NAME which is more reliable
+    $script_name = $_SERVER['SCRIPT_NAME'];
+    $base_path = dirname($script_name);
     
-    // Find the project root by going up until we find index.php or reach document root
-    $project_root = $relative_path;
-    $script_dir = dirname($_SERVER['SCRIPT_FILENAME']);
-    
-    // Go up directories until we find index.php or reach document root
-    while ($script_dir !== $real_doc_root && $script_dir !== dirname($script_dir)) {
-        if (file_exists($script_dir . '/index.php')) {
-            $project_root = str_replace($real_doc_root, '', $script_dir);
-            break;
+    // If we're at root level, get the project folder name
+    if ($base_path === '/' || $base_path === '.' || empty($base_path)) {
+        // Get the project folder name from the script directory
+        $real_script_dir = dirname($_SERVER['SCRIPT_FILENAME']);
+        $real_doc_root = $_SERVER['DOCUMENT_ROOT'];
+        $relative_path = str_replace($real_doc_root, '', $real_script_dir);
+        $base_path = rtrim($relative_path, '/') ?: '';
+    } else {
+        // Remove the subdirectory (like /public) to get project root
+        // Go up until we find index.php
+        $script_dir = dirname($_SERVER['SCRIPT_FILENAME']);
+        $doc_root = $_SERVER['DOCUMENT_ROOT'];
+        
+        // Find project root by looking for index.php
+        $project_root = '';
+        $current_dir = $script_dir;
+        while ($current_dir !== $doc_root && $current_dir !== dirname($current_dir)) {
+            if (file_exists($current_dir . '/index.php')) {
+                $project_root = str_replace($doc_root, '', $current_dir);
+                break;
+            }
+            $current_dir = dirname($current_dir);
         }
-        $script_dir = dirname($script_dir);
+        
+        $base_path = rtrim($project_root, '/') ?: '';
     }
-    
-    $project_root = rtrim($project_root, '/') ?: '';
     
     // If path starts with /uploads/, prepend project root
     if (substr($image_path, 0, 9) === '/uploads/') {
-        return $project_root . $image_path;
+        return $base_path . $image_path;
     }
     
     // For other paths starting with /, prepend project root
     if (substr($image_path, 0, 1) === '/') {
-        return $project_root . $image_path;
+        return $base_path . $image_path;
     }
     
     // For relative paths (like ../uploads/...), handle them
     if (substr($image_path, 0, 3) === '../') {
         // Calculate from current script's directory
-        $script_name = $_SERVER['SCRIPT_NAME'];
         $current_dir = dirname($script_name);
         $current_dir = rtrim($current_dir, '/') ?: '';
         return $current_dir . '/' . $image_path;
     }
     
     // For relative paths without ../, prepend project root
-    return $project_root . '/' . $image_path;
+    return $base_path . '/' . $image_path;
 }
 ?>
