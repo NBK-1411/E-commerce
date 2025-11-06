@@ -15,6 +15,30 @@ if ($selected_category) {
 } else {
     $perfumes = $perfumeController->getAll();
 }
+
+// Get base path for error handling
+$script_name = $_SERVER['SCRIPT_NAME'];
+$base_path = dirname($script_name);
+if ($base_path === '/' || $base_path === '.' || empty($base_path)) {
+    $real_script_dir = dirname($_SERVER['SCRIPT_FILENAME']);
+    $real_doc_root = $_SERVER['DOCUMENT_ROOT'];
+    $relative_path = str_replace($real_doc_root, '', $real_script_dir);
+    $base_path = rtrim($relative_path, '/') ?: '';
+} else {
+    // Go up to find project root
+    $script_dir = dirname($_SERVER['SCRIPT_FILENAME']);
+    $doc_root = $_SERVER['DOCUMENT_ROOT'];
+    $project_root = '';
+    $current_dir = $script_dir;
+    while ($current_dir !== $doc_root && $current_dir !== dirname($current_dir)) {
+        if (file_exists($current_dir . '/index.php')) {
+            $project_root = str_replace($doc_root, '', $current_dir);
+            break;
+        }
+        $current_dir = dirname($current_dir);
+    }
+    $base_path = rtrim($project_root, '/') ?: '';
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -307,10 +331,16 @@ if ($selected_category) {
                     <?php foreach ($perfumes as $perfume): ?>
                         <div class="product-card">
                             <?php if (!empty($perfume['image'])): ?>
-                                <img src="<?php echo htmlspecialchars(normalize_image_path($perfume['image'])); ?>" 
+                                <?php 
+                                $raw_path = $perfume['image'];
+                                $normalized_path = normalize_image_path($raw_path);
+                                // Debug: uncomment to see paths
+                                // echo "<!-- Raw: " . htmlspecialchars($raw_path) . " | Normalized: " . htmlspecialchars($normalized_path) . " -->";
+                                ?>
+                                <img src="<?php echo htmlspecialchars($normalized_path); ?>" 
                                      alt="<?php echo htmlspecialchars($perfume['name']); ?>" 
                                      class="product-image"
-                                     onerror="this.onerror=null; this.src='<?php echo htmlspecialchars($base_path); ?>/placeholder.svg?height=400&width=300';">
+                                     onerror="console.error('Image failed to load:', '<?php echo htmlspecialchars($normalized_path); ?>'); this.onerror=null; this.src='<?php echo htmlspecialchars($base_path); ?>/placeholder.svg?height=400&width=300';">
                             <?php else: ?>
                                 <div class="product-image-placeholder">
                                     <span>No image</span>
