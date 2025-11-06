@@ -72,11 +72,18 @@ if (isset($_POST['action']) && $_POST['action'] === 'login') {
                 $_SESSION['user_role'] = $customer['user_role'];
                 
                 // Redirect based on role (1 = admin, 2 = customer)
-                if ($customer['user_role'] == 1) {
-                    header('Location: admin.php');
+                // Build absolute URL for redirect
+                $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+                $host = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost';
+                $script_dir = dirname($_SERVER['SCRIPT_NAME']);
+                
+                if ($script_dir === '/' || $script_dir === '.') {
+                    $redirect_url = $protocol . '://' . $host . '/' . ($customer['user_role'] == 1 ? 'admin.php' : 'index.php');
                 } else {
-                    header('Location: index.php');
+                    $redirect_url = $protocol . '://' . $host . rtrim($script_dir, '/') . '/' . ($customer['user_role'] == 1 ? 'admin.php' : 'index.php');
                 }
+                
+                header('Location: ' . $redirect_url);
                 exit();
             } else {
                 header('Location: login.php?error=Invalid email or password');
@@ -181,7 +188,21 @@ if (isset($_POST['action']) && $_POST['action'] === 'signup') {
             $_SESSION['user_role'] = $user_role;
             
             error_log("Session set, redirecting to index.php");
-            header('Location: index.php?welcome=1');
+            
+            // Build absolute URL for redirect to work on both local and live server
+            $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+            $host = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost';
+            $script_dir = dirname($_SERVER['SCRIPT_NAME']);
+            
+            // If script is in root, use root, otherwise use the directory
+            if ($script_dir === '/' || $script_dir === '.') {
+                $redirect_url = $protocol . '://' . $host . '/index.php?welcome=1';
+            } else {
+                $redirect_url = $protocol . '://' . $host . rtrim($script_dir, '/') . '/index.php?welcome=1';
+            }
+            
+            error_log("Redirect URL: " . $redirect_url);
+            header('Location: ' . $redirect_url);
             exit();
         } else {
             error_log("Registration error: " . $result['message']);

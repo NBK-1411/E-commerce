@@ -1,12 +1,27 @@
 <?php
-// Enable error reporting for debugging (remove in production)
+// Enable error reporting for debugging
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+// Don't display errors on live server, but log them
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
 
-require_once __DIR__ . '/settings/db_cred.php';
-require_once __DIR__ . '/settings/core.php';
-require_once __DIR__ . '/controllers/perfume_controller.php';
-require_once __DIR__ . '/controllers/category_controller.php';
+// Start output buffering to catch any errors
+ob_start();
+
+try {
+    require_once __DIR__ . '/settings/db_cred.php';
+    require_once __DIR__ . '/settings/core.php';
+    require_once __DIR__ . '/controllers/perfume_controller.php';
+    require_once __DIR__ . '/controllers/category_controller.php';
+} catch (Exception $e) {
+    error_log("Error loading required files in index.php: " . $e->getMessage());
+    ob_end_clean();
+    die("Error loading page. Please try again later.");
+} catch (Error $e) {
+    error_log("Fatal error loading required files in index.php: " . $e->getMessage());
+    ob_end_clean();
+    die("Fatal error loading page. Please contact support.");
+}
 
 // Determine the base path for this project (relative to document root)
 // This ensures image URLs work correctly regardless of where the project is located
@@ -26,8 +41,18 @@ function get_base_path() {
 
 $base_path = get_base_path();
 
-$perfumeController = new PerfumeController();
-$categoryController = new CategoryController();
+try {
+    $perfumeController = new PerfumeController();
+    $categoryController = new CategoryController();
+} catch (Exception $e) {
+    error_log("Error creating controllers in index.php: " . $e->getMessage());
+    ob_end_clean();
+    die("Error initializing page. Please try again later.");
+} catch (Error $e) {
+    error_log("Fatal error creating controllers in index.php: " . $e->getMessage());
+    ob_end_clean();
+    die("Fatal error initializing page. Please contact support.");
+}
 
 // Safely get data, with error handling
 try {
