@@ -449,92 +449,23 @@ class Perfume {
         $badgeResults = $this->db->read($badgeQuery);
         
         $featuredProducts = is_array($badgeResults) ? $badgeResults : [];
-        $featuredCount = count($featuredProducts);
         
-        // If we have enough products with badges, return them
-        if ($featuredCount >= $limit) {
-            // Extract badge information
-            foreach ($featuredProducts as &$product) {
-                $keywords = $product['keywords'] ?? '';
-                $badge = '';
-                if (stripos($keywords, 'badge:') !== false) {
-                    $parts = explode('badge:', $keywords);
-                    if (isset($parts[1])) {
-                        $badgeParts = explode(',', trim($parts[1]));
-                        $badge = trim($badgeParts[0]);
-                    }
-                }
-                $product['badge'] = $badge;
-                unset($product['keywords']); // Remove keywords from output
-            }
-            return array_slice($featuredProducts, 0, $limit);
-        }
-        
-        // If not enough products with badges, fill with newest products (without any badge)
-        $remainingSlots = $limit - $featuredCount;
-        if ($remainingSlots > 0) {
-            $newestQuery = "SELECT DISTINCT p.product_id as id, p.product_title as name, 
-                         COALESCE(b.brand_name, 'Unknown') as brand, p.product_cat as category_id, 
-                         p.product_price as price, 
-                         10 as stock, 
-                         COALESCE(p.product_desc, '') as description, 
-                         COALESCE(p.product_image, '') as image,
-                         COALESCE(c.cat_name, 'Uncategorized') as category,
-                         COALESCE(p.product_keywords, '') as keywords
-                  FROM products p 
-                  LEFT JOIN categories c ON p.product_cat = c.cat_id 
-                  LEFT JOIN brands b ON p.product_brand = b.brand_id 
-                  WHERE (p.product_keywords NOT LIKE '%badge:Bestseller%' 
-                     AND p.product_keywords NOT LIKE '%badge:Featured%'
-                     AND p.product_keywords NOT LIKE '%badge:Popular%'
-                     AND p.product_keywords NOT LIKE '%badge:New%'
-                     AND p.product_keywords NOT LIKE '%badge:bestseller%'
-                     AND p.product_keywords NOT LIKE '%badge:featured%'
-                     AND p.product_keywords NOT LIKE '%badge:popular%'
-                     AND p.product_keywords NOT LIKE '%badge:new%')
-                     OR p.product_keywords IS NULL
-                     OR p.product_keywords = ''
-                  ORDER BY p.product_id DESC 
-                  LIMIT " . $remainingSlots;
-            $newestResults = $this->db->read($newestQuery);
-            
-            if (is_array($newestResults)) {
-                // Extract badge information for newest products
-                foreach ($newestResults as &$product) {
-                    $keywords = $product['keywords'] ?? '';
-                    $badge = '';
-                    if (stripos($keywords, 'badge:') !== false) {
-                        $parts = explode('badge:', $keywords);
-                        if (isset($parts[1])) {
-                            $badgeParts = explode(',', trim($parts[1]));
-                            $badge = trim($badgeParts[0]);
-                        }
-                    }
-                    $product['badge'] = $badge;
-                    unset($product['keywords']); // Remove keywords from output
-                }
-                $featuredProducts = array_merge($featuredProducts, $newestResults);
-            }
-        }
-        
-        // Extract badge information for featured products if not already done
+        // Extract badge information for all featured products
         foreach ($featuredProducts as &$product) {
-            if (!isset($product['badge'])) {
-                $keywords = $product['keywords'] ?? '';
-                $badge = '';
-                if (stripos($keywords, 'badge:') !== false) {
-                    $parts = explode('badge:', $keywords);
-                    if (isset($parts[1])) {
-                        $badgeParts = explode(',', trim($parts[1]));
-                        $badge = trim($badgeParts[0]);
-                    }
+            $keywords = $product['keywords'] ?? '';
+            $badge = '';
+            if (stripos($keywords, 'badge:') !== false) {
+                $parts = explode('badge:', $keywords);
+                if (isset($parts[1])) {
+                    $badgeParts = explode(',', trim($parts[1]));
+                    $badge = trim($badgeParts[0]);
                 }
-                $product['badge'] = $badge;
-                unset($product['keywords']);
             }
+            $product['badge'] = $badge;
+            unset($product['keywords']); // Remove keywords from output
         }
         
-        // Return up to the limit
+        // Return only products that have badges (no auto-fill)
         return array_slice($featuredProducts, 0, $limit);
     }
 }

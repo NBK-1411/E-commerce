@@ -20,13 +20,13 @@ BUT the second query was missing `badge:New` from the exclusion list, so product
 
 **Cause:** The "fill remaining slots" logic was selecting the newest products by `ORDER BY product_id DESC`, which included ALL products without badges - even those you didn't want featured.
 
-**Fix:** Now only products that **explicitly have** one of these badges will appear in Bestsellers:
+**Fix:** Now **ONLY** products that **explicitly have** one of these badges will appear in Bestsellers:
 - Bestseller
 - Featured  
 - Popular
 - New
 
-If there aren't enough products with badges, it will fill with products that have NO badge at all (empty or null keywords).
+**NO auto-fill** - If you have only 3 badged products, only 3 will show in Bestsellers. Products without badges will never appear.
 
 ---
 
@@ -34,33 +34,34 @@ If there aren't enough products with badges, it will fill with products that hav
 
 ### Bestsellers Section Logic:
 
-1. **First:** Get up to 6 products with these badges (case-insensitive):
+1. **Get products with featured badges ONLY** (case-insensitive):
    - Bestseller
    - Featured
    - Popular
    - New
 
-2. **If not enough:** Fill remaining slots with products that have:
-   - NO badge at all (empty or null keywords)
-   - Sorted by newest first
+2. **Show up to 6 products** that have one of those badges
 
-3. **Never:** Include products twice (DISTINCT ensures this)
+3. **NO auto-fill** - If you have only 3 products with badges, only 3 will show
+
+4. **No duplicates** - DISTINCT ensures each product appears once
 
 ### Example Scenarios:
 
-**Scenario 1: You have 3 products with "Bestseller" badge**
-- Shows: 3 with badge + 3 newest products without any badge = 6 total
+**Scenario 1: You have 3 products with badges**
+- Shows: Only those 3 products
+- Bestsellers section shows 3 items (not filled to 6)
 
 **Scenario 2: You have 6+ products with badges**
-- Shows: Only those 6 products with badges
+- Shows: First 6 products with badges (newest first)
 
 **Scenario 3: You add new product with "New" badge**
 - Shows: In Bestsellers (because "New" is a featured badge)
 - Shows ONLY ONCE (no duplicates)
 
 **Scenario 4: You add new product WITHOUT any badge**
-- Does NOT automatically appear in Bestsellers
-- Only appears if there aren't enough badged products to fill 6 slots
+- Does NOT appear in Bestsellers at all
+- NEVER auto-fills
 
 ---
 
@@ -83,10 +84,12 @@ Products appear in "Bestsellers" section if they have ANY of these badges:
 - ❌ "New" badge products appeared twice
 - ❌ Every new product auto-appeared in Bestsellers
 - ❌ No control over what shows as featured
+- ❌ Auto-filled with non-badged products
 
 **After:**
 - ✅ Each product appears only once
-- ✅ Only products with specific badges appear (unless not enough)
+- ✅ ONLY products with specific badges appear
+- ✅ NO auto-fill with non-badged products
 - ✅ Full control via badge assignment
 - ✅ Clean, predictable behavior
 
@@ -104,7 +107,7 @@ To verify the fix:
 2. **Test badge filtering:**
    - Add product WITHOUT any badge
    - Check index.php Bestsellers section
-   - Should NOT appear (unless you have < 6 badged products)
+   - Should NOT appear at all (never auto-fills)
 
 3. **Test all badge types:**
    - Add products with each badge: Bestseller, Featured, Popular, New
