@@ -425,7 +425,7 @@ class Perfume {
         $limit = (int)$limit; // Ensure it's an integer for safety
         
         // First, get products with featured badges (Bestseller, Featured, Popular, New)
-        $badgeQuery = "SELECT p.product_id as id, p.product_title as name, 
+        $badgeQuery = "SELECT DISTINCT p.product_id as id, p.product_title as name, 
                          COALESCE(b.brand_name, 'Unknown') as brand, p.product_cat as category_id, 
                          p.product_price as price, 
                          10 as stock, 
@@ -443,6 +443,7 @@ class Perfume {
                      OR p.product_keywords LIKE '%badge:bestseller%'
                      OR p.product_keywords LIKE '%badge:featured%'
                      OR p.product_keywords LIKE '%badge:popular%'
+                     OR p.product_keywords LIKE '%badge:new%'
                   ORDER BY p.product_id DESC 
                   LIMIT " . $limit;
         $badgeResults = $this->db->read($badgeQuery);
@@ -469,10 +470,10 @@ class Perfume {
             return array_slice($featuredProducts, 0, $limit);
         }
         
-        // If not enough products with badges, fill with newest products
+        // If not enough products with badges, fill with newest products (without any badge)
         $remainingSlots = $limit - $featuredCount;
         if ($remainingSlots > 0) {
-            $newestQuery = "SELECT p.product_id as id, p.product_title as name, 
+            $newestQuery = "SELECT DISTINCT p.product_id as id, p.product_title as name, 
                          COALESCE(b.brand_name, 'Unknown') as brand, p.product_cat as category_id, 
                          p.product_price as price, 
                          10 as stock, 
@@ -486,9 +487,11 @@ class Perfume {
                   WHERE (p.product_keywords NOT LIKE '%badge:Bestseller%' 
                      AND p.product_keywords NOT LIKE '%badge:Featured%'
                      AND p.product_keywords NOT LIKE '%badge:Popular%'
+                     AND p.product_keywords NOT LIKE '%badge:New%'
                      AND p.product_keywords NOT LIKE '%badge:bestseller%'
                      AND p.product_keywords NOT LIKE '%badge:featured%'
-                     AND p.product_keywords NOT LIKE '%badge:popular%')
+                     AND p.product_keywords NOT LIKE '%badge:popular%'
+                     AND p.product_keywords NOT LIKE '%badge:new%')
                      OR p.product_keywords IS NULL
                      OR p.product_keywords = ''
                   ORDER BY p.product_id DESC 

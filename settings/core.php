@@ -50,11 +50,7 @@ function json_response($success, $message, $data = []) {
 
 // Get the absolute file system path to the uploads folder
 function get_uploads_path() {
-    // Load upload config if not already loaded
-    if (!defined('UPLOADS_BASE_PATH')) {
-        require_once __DIR__ . '/upload_config.php';
-    }
-    return UPLOADS_BASE_PATH;
+    return __DIR__ . '/../uploads';
 }
 
 // Build the base URL (protocol + host)
@@ -100,24 +96,11 @@ function get_project_root_web_path() {
     return $cached;
 }
 
-// Get the web-accessible URL path for uploads folder (works for local and shared live server folder)
+// Get the web-accessible URL path for uploads folder
 function get_uploads_url($image_path = '') {
-    // Load upload config if not already loaded
-    if (!defined('UPLOADS_WEB_PATH')) {
-        require_once __DIR__ . '/upload_config.php';
-    }
-    
     $base_url = get_base_url();
     $project_root = get_project_root_web_path();
-    
-    // Check if we're using absolute paths (school server with /uploads)
-    if (IS_SCHOOL_SERVER && strpos(UPLOADS_WEB_PATH, '/') === 0) {
-        // School server: absolute path like /uploads
-        $uploads_base = rtrim($base_url, '/') . UPLOADS_WEB_PATH;
-    } else {
-        // Local: relative path like project/uploads
-        $uploads_base = rtrim($base_url . $project_root, '/') . '/' . UPLOADS_WEB_PATH;
-    }
+    $uploads_base = rtrim($base_url . $project_root, '/') . '/uploads';
 
     $image_path = trim($image_path);
     if ($image_path === '') {
@@ -125,7 +108,6 @@ function get_uploads_url($image_path = '') {
     }
 
     $relative = ltrim($image_path, '/');
-    // Remove 'uploads/' prefix if present
     if (strpos($relative, 'uploads/') === 0) {
         $relative = substr($relative, 8);
     }

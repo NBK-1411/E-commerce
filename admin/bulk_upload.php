@@ -232,102 +232,104 @@ if (!$user_id) {
             }
 
             uploadBtn.disabled = true;
-            uploadBtn.textContent = 'Uploading...';
+            uploadBtn.textContent = `Uploading ${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''}...`;
             messageDiv.innerHTML = '';
 
-            let successCount = 0;
-            let errorCount = 0;
-            const results = [];
-
-            for (let i = 0; i < selectedFiles.length; i++) {
-                const file = selectedFiles[i];
-                const fileItem = document.getElementById(`file-${i}`);
+            // Show progress bars
+            selectedFiles.forEach((file, index) => {
+                const fileItem = document.getElementById(`file-${index}`);
                 const progressBar = fileItem.querySelector('.progress-bar');
-                const progressFill = fileItem.querySelector('.progress-fill');
-                
                 progressBar.style.display = 'block';
-                progressFill.style.width = '0%';
+            });
 
-                try {
-                    const formData = new FormData();
-                    formData.append('image', file);
-                    formData.append('product_id', 0); // Upload to temp folder
+            try {
+                // Create FormData with all files
+                const formData = new FormData();
+                selectedFiles.forEach((file, index) => {
+                    formData.append('images[]', file);
+                });
 
-                    const response = await fetch('../actions/upload_product_image_action.php', {
-                        method: 'POST',
-                        body: formData
+                // Upload all files in one request
+                const response = await fetch('../actions/bulk_upload_product_images_action.php', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const results = data.data.results;
+                    
+                    // Update UI for each file
+                    results.forEach((result, index) => {
+                        const fileItem = document.getElementById(`file-${index}`);
+                        const progressFill = fileItem.querySelector('.progress-fill');
+                        
+                        if (result.success) {
+                            progressFill.style.width = '100%';
+                            progressFill.style.background = '#10b981';
+                            fileItem.classList.add('success');
+                        } else {
+                            progressFill.style.width = '100%';
+                            progressFill.style.background = '#ef4444';
+                            fileItem.classList.add('error');
+                        }
                     });
 
-                    const data = await response.json();
-
-                    if (data.success) {
-                        progressFill.style.width = '100%';
-                        fileItem.classList.add('success');
-                        successCount++;
-                        results.push({
-                            filename: file.name,
-                            path: data.data.path,
-                            success: true
+                    // Show results
+                    const successCount = data.data.success_count;
+                    const errorCount = data.data.error_count;
+                    
+                    let resultMessage = `<div style="padding: 1rem; border-radius: 6px; margin-top: 1rem; ${
+                        errorCount === 0 ? 'background: #f0fdf4; border: 1px solid #10b981;' : 'background: #fef2f2; border: 1px solid #ef4444;'
+                    }">`;
+                    resultMessage += `<strong>Upload Complete:</strong> ${successCount} successful, ${errorCount} failed<br><br>`;
+                    
+                    if (successCount > 0) {
+                        resultMessage += '<strong>Uploaded Files:</strong><ul style="margin-top: 0.5rem;">';
+                        results.filter(r => r.success).forEach(r => {
+                            resultMessage += `<li>${escapeHtml(r.filename)} → ${escapeHtml(r.saved_as)}<br><small style="color: #64748b;">Path: ${escapeHtml(r.path)}</small></li>`;
                         });
-                    } else {
-                        fileItem.classList.add('error');
-                        errorCount++;
-                        results.push({
-                            filename: file.name,
-                            error: data.message,
-                            success: false
-                        });
+                        resultMessage += '</ul>';
                     }
-                } catch (error) {
-                    fileItem.classList.add('error');
-                    errorCount++;
-                    results.push({
-                        filename: file.name,
-                        error: error.message,
-                        success: false
-                    });
+
+                    if (errorCount > 0) {
+                        resultMessage += '<strong>Failed Files:</strong><ul style="margin-top: 0.5rem; color: #991b1b;">';
+                        results.filter(r => !r.success).forEach(r => {
+                            resultMessage += `<li>${escapeHtml(r.filename)} - ${escapeHtml(r.error)}</li>`;
+                        });
+                        resultMessage += '</ul>';
+                    }
+
+                    resultMessage += '</div>';
+                    messageDiv.innerHTML = resultMessage;
+
+                    // Clear files after successful upload
+                    if (errorCount === 0) {
+                        setTimeout(() => {
+                            selectedFiles = [];
+                            updateFileList();
+                            messageDiv.innerHTML = '';
+                            showMessage('All files uploaded successfully! Ready for new upload.', 'success');
+                        }, 3000);
+                    }
+                } else {
+                    showMessage(data.message || 'Upload failed', 'error');
                 }
 
-                // Small delay to show progress
-                await new Promise(resolve => setTimeout(resolve, 100));
-            }
-
-            // Show results
-            let resultMessage = `<div style="padding: 1rem; border-radius: 6px; margin-top: 1rem; ${
-                errorCount === 0 ? 'background: #f0fdf4; border: 1px solid #10b981;' : 'background: #fef2f2; border: 1px solid #ef4444;'
-            }">`;
-            resultMessage += `<strong>Upload Complete:</strong> ${successCount} successful, ${errorCount} failed<br><br>`;
-            
-            if (successCount > 0) {
-                resultMessage += '<strong>Uploaded Files:</strong><ul style="margin-top: 0.5rem;">';
-                results.filter(r => r.success).forEach(r => {
-                    resultMessage += `<li>${escapeHtml(r.filename)} - Path: ${escapeHtml(r.path)}</li>`;
+            } catch (error) {
+                console.error('Upload error:', error);
+                showMessage('Error uploading files: ' + error.message, 'error');
+                
+                // Mark all as error
+                selectedFiles.forEach((file, index) => {
+                    const fileItem = document.getElementById(`file-${index}`);
+                    fileItem.classList.add('error');
                 });
-                resultMessage += '</ul>';
             }
-
-            if (errorCount > 0) {
-                resultMessage += '<strong>Failed Files:</strong><ul style="margin-top: 0.5rem;">';
-                results.filter(r => !r.success).forEach(r => {
-                    resultMessage += `<li>${escapeHtml(r.filename)} - ${escapeHtml(r.error)}</li>`;
-                });
-                resultMessage += '</ul>';
-            }
-
-            resultMessage += '</div>';
-            messageDiv.innerHTML = resultMessage;
 
             uploadBtn.disabled = false;
             uploadBtn.textContent = 'Upload All Images';
-
-            // Clear files after successful upload
-            if (errorCount === 0) {
-                setTimeout(() => {
-                    selectedFiles = [];
-                    updateFileList();
-                    messageDiv.innerHTML = '';
-                }, 3000);
-            }
         });
 
         function showMessage(text, type) {
