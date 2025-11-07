@@ -91,7 +91,7 @@ function get_uploads_url($image_path = '') {
     return $url_path;
 }
 
-// Normalize image path for display - handles both /uploads/ paths and other paths
+// Normalize image path for display - uses the path from database as-is
 function normalize_image_path($image_path) {
     if (empty($image_path)) {
         return '';
@@ -122,37 +122,15 @@ function normalize_image_path($image_path) {
     
     $base_path = rtrim($project_root, '/') ?: '';
     
-    // Normalize the path - handle both formats:
-    // 1. /uploads/u{userId}/p{productId}/image.jpg (with leading slash)
-    // 2. uploads/u{userId}/p{productId}/image.jpg (without leading slash)
+    // Use the path from database as-is - just prepend project root
+    // Database path format: /uploads/u{userId}/p{productId}/image.jpg or uploads/u{userId}/p{productId}/image.jpg
     
-    // Remove leading slash if present for consistent handling
-    $normalized_path = ltrim($image_path, '/');
-    
-    // If it starts with 'uploads/', prepend project root and add leading slash
-    if (substr($normalized_path, 0, 8) === 'uploads/') {
-        return $base_path . '/' . $normalized_path;
-    }
-    
-    // If path starts with /uploads/, prepend project root
-    if (substr($image_path, 0, 9) === '/uploads/') {
-        return $base_path . $image_path;
-    }
-    
-    // For other paths starting with /, prepend project root
+    // If path starts with /, prepend project root
     if (substr($image_path, 0, 1) === '/') {
         return $base_path . $image_path;
     }
     
-    // For relative paths (like ../uploads/...), handle them
-    if (substr($image_path, 0, 3) === '../') {
-        // Calculate from current script's directory
-        $current_dir = dirname($script_name);
-        $current_dir = rtrim($current_dir, '/') ?: '';
-        return $current_dir . '/' . $image_path;
-    }
-    
-    // For relative paths without ../, prepend project root
+    // If path doesn't start with /, prepend project root and add /
     return $base_path . '/' . $image_path;
 }
 ?>
