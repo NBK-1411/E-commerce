@@ -151,18 +151,19 @@ try {
         exit;
     }
     
-    // Return relative path from project root (without leading slash for consistency)
-    // Format: uploads/u{userId}/p{productId}/filename.ext or uploads/u{userId}/temp/filename.ext
-    $relative_path = 'uploads/u' . $user_id;
+    // Return path for database storage
+    // Format: uploads/u{userId}/p{productId}/filename.ext
+    // Works for both local and live server since uploads is inside the project
+    $db_path = 'uploads/u' . $user_id;
     if ($product_id > 0) {
-        $relative_path .= '/p' . $product_id;
+        $db_path .= '/p' . $product_id;
     } else {
-        $relative_path .= '/temp';
+        $db_path .= '/temp';
     }
-    $relative_path .= '/' . $filename;
+    $db_path .= '/' . $filename;
     
     json_response(true, 'Image uploaded successfully', [
-        'path' => $relative_path,
+        'path' => $db_path,
         'filename' => $filename,
         'full_path' => $file_path
     ]);
