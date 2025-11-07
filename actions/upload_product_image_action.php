@@ -145,27 +145,48 @@ try {
         exit;
     }
     
-    // Move uploaded file
-    if (!move_uploaded_file($file['tmp_name'], $file_path)) {
-        json_response(false, 'Failed to save uploaded file', []);
+    // Upload to remote server using cURL
+    $remote_upload_url = 'http://169.239.251.102:442/~nana.hayford/upload.php';
+    
+    $ch = curl_init();
+    
+    // Create CURLFile object for the file
+    $cfile = new CURLFile($file['tmp_name'], $mime_type, $file['name']);
+    
+    // Prepare POST data
+    $post_data = [
+        'file' => $cfile,
+        'user_id' => $user_id,
+        'product_id' => $product_id
+    ];
+    
+    // Set cURL options
+    curl_setopt($ch, CURLOPT_URL, $remote_upload_url);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    
+    // Execute the request
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curl_error = curl_error($ch);
+    curl_close($ch);
+    
+    // Check if upload was successful
+    if ($http_code !== 200 || $curl_error) {
+        json_response(false, 'Failed to upload to remote server: ' . ($curl_error ?: 'HTTP ' . $http_code), []);
         exit;
     }
     
-    // Return path for database storage
-    // Format: uploads/u{userId}/p{productId}/filename.ext
-    // Works for both local and live server since uploads is inside the project
-    $db_path = 'uploads/u' . $user_id;
-    if ($product_id > 0) {
-        $db_path .= '/p' . $product_id;
-    } else {
-        $db_path .= '/temp';
-    }
-    $db_path .= '/' . $filename;
+    // Build the remote URL path
+    $remote_filename = $filename;
+    $db_path = 'http://169.239.251.102:442/~nana.hayford/uploads/' . $remote_filename;
     
-    json_response(true, 'Image uploaded successfully', [
+    json_response(true, 'Image uploaded successfully to remote server', [
         'path' => $db_path,
         'filename' => $filename,
-        'full_path' => $file_path
+        'remote_url' => $db_path
     ]);
     
 } catch (Exception $e) {

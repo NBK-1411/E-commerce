@@ -50,11 +50,16 @@ fetch('../actions/bulk_upload_product_images_action.php', {
 
 ### Backend (PHP):
 ```php
-// Process ALL files from $_FILES['images']
+// Process ALL files and upload to remote server
 for ($i = 0; $i < count($_FILES['images']['name']); $i++) {
     $file_name = $_FILES['images']['name'][$i];
     $file_tmp = $_FILES['images']['tmp_name'][$i];
-    // ... validate and save each file
+    
+    // Upload to remote server via cURL
+    $cfile = new CURLFile($file_tmp, $mime_type, $file_name);
+    curl_setopt($ch, CURLOPT_URL, 'http://169.239.251.102:442/~nana.hayford/upload.php');
+    curl_setopt($ch, CURLOPT_POSTFIELDS, ['file' => $cfile]);
+    $response = curl_exec($ch);
 }
 
 // Return results for ALL files
@@ -98,13 +103,14 @@ json_response(true, "Results", [
 - **Total files**: Limited by PHP settings (`max_file_uploads`)
 
 ### Storage Location:
-- Bulk uploads go to: `uploads/u{user_id}/temp/`
-- Later can be moved to product folders when assigned
+- **Remote Server:** `http://169.239.251.102:442/~nana.hayford/uploads/`
+- Files uploaded via cURL to remote upload server
+- No local storage needed
 
 ### File Naming:
-- Original name sanitized
-- Timestamp added for uniqueness
-- Index added to prevent collisions: `filename_1234567890_0.jpg`
+- Original filename preserved
+- Remote server handles naming/storage
+- Database stores full remote URL
 
 ---
 

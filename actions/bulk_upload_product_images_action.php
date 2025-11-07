@@ -1,7 +1,7 @@
 <?php
 /**
- * Bulk image upload handler - handles multiple files in one request
- * Path structure: uploads/u{user_id}/temp/image_name.png
+ * Bulk image upload handler - uploads to remote server
+ * Remote URL: http://169.239.251.102:442/~nana.hayford/upload.php
  */
 
 error_reporting(E_ALL);
@@ -34,42 +34,10 @@ try {
     $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     $max_size = 5 * 1024 * 1024; // 5MB
     
-    // Get uploads path
-    $uploads_base = get_uploads_path();
-    if (!is_dir($uploads_base)) {
-        json_response(false, 'Uploads folder not found', []);
-        exit;
-    }
+    // Remote upload server URL
+    $remote_upload_url = 'http://169.239.251.102:442/~nana.hayford/upload.php';
     
-    if (!is_writable($uploads_base)) {
-        json_response(false, 'Uploads folder is not writable', []);
-        exit;
-    }
-    
-    // Create user directory
-    $user_dir = $uploads_base . '/u' . $user_id;
-    if (!is_dir($user_dir)) {
-        if (!@mkdir($user_dir, 0755, true)) {
-            json_response(false, 'Failed to create user directory', []);
-            exit;
-        }
-    }
-    
-    // Create temp directory for bulk uploads
-    $temp_dir = $user_dir . '/temp';
-    if (!is_dir($temp_dir)) {
-        if (!@mkdir($temp_dir, 0755, true)) {
-            json_response(false, 'Failed to create temp directory', []);
-            exit;
-        }
-    }
-    
-    if (!is_writable($temp_dir)) {
-        json_response(false, 'Temp directory is not writable', []);
-        exit;
-    }
-    
-    // Process each uploaded file
+    // Process each uploaded file and send to remote server
     $results = [];
     $success_count = 0;
     $error_count = 0;
@@ -119,46 +87,52 @@ try {
             continue;
         }
         
-        // Generate unique filename
-        $extension = pathinfo($file_name, PATHINFO_EXTENSION);
-        $base_name = pathinfo($file_name, PATHINFO_FILENAME);
-        $base_name = preg_replace('/[^a-zA-Z0-9_-]/', '', $base_name);
-        $unique_filename = $base_name . '_' . time() . '_' . $i . '.' . $extension;
-        $file_path = $temp_dir . '/' . $unique_filename;
+        // Upload file to remote server using cURL
+        $ch = curl_init();
         
-        // Verify path is within uploads directory (security)
-        $real_uploads = realpath($uploads_base);
-        $real_temp = realpath($temp_dir);
+        // Create CURLFile object for the file
+        $cfile = new CURLFile($file_tmp, $mime_type, $file_name);
         
-        if (!$real_temp || strpos($real_temp, $real_uploads) !== 0) {
+        // Prepare POST data
+        $post_data = [
+            'file' => $cfile,
+            'user_id' => $user_id
+        ];
+        
+        // Set cURL options
+        curl_setopt($ch, CURLOPT_URL, $remote_upload_url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        
+        // Execute the request
+        $response = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curl_error = curl_error($ch);
+        curl_close($ch);
+        
+        // Check if upload was successful
+        if ($http_code !== 200 || $curl_error) {
             $results[] = [
                 'filename' => $file_name,
                 'success' => false,
-                'error' => 'Invalid upload path'
+                'error' => 'Failed to upload to remote server: ' . ($curl_error ?: 'HTTP ' . $http_code)
             ];
             $error_count++;
             continue;
         }
         
-        // Move uploaded file
-        if (!move_uploaded_file($file_tmp, $file_path)) {
-            $results[] = [
-                'filename' => $file_name,
-                'success' => false,
-                'error' => 'Failed to save file'
-            ];
-            $error_count++;
-            continue;
-        }
-        
-        // Build database path
-        $db_path = 'uploads/u' . $user_id . '/temp/' . $unique_filename;
+        // Build the remote URL path (assuming remote server stores in uploads/)
+        $remote_filename = basename($file_name);
+        $db_path = 'http://169.239.251.102:442/~nana.hayford/uploads/' . $remote_filename;
         
         $results[] = [
             'filename' => $file_name,
             'success' => true,
             'path' => $db_path,
-            'saved_as' => $unique_filename
+            'saved_as' => $remote_filename,
+            'remote_url' => $db_path
         ];
         $success_count++;
     }
