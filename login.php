@@ -34,7 +34,7 @@ if (isset($_GET['error'])) {
                 </a>
             </div>
             <div class="auth-image">
-                <img src="/placeholder.svg?height=800&width=600" alt="Luxury Perfumes">
+                <img src="public/luxury-perfume-bottles-on-elegant-marble-surface-w.jpg" alt="Luxury Perfumes">
             </div>
         </div>
         

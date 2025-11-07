@@ -347,7 +347,7 @@ if (isset($_GET['welcome']) && $_GET['welcome'] == 1 && is_logged_in()) {
                 <a href="public/shop.php" class="btn btn-light">Explore Collection</a>
             </div>
             <div class="promo-image">
-                <img src="/placeholder.svg?height=600&width=800" alt="Limited Edition Collection">
+                <img src="public/luxury-rose-perfume-bottle-elegant-black-design.jpg" alt="Limited Edition Collection">
             </div>
         </div>
     </section>

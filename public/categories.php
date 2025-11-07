@@ -125,14 +125,43 @@ if (!is_array($allCategories)) {
                         // Get products for this category
                         $categoryProducts = $perfumeController->getByCategory($category['id']);
                         $productCount = is_array($categoryProducts) ? count($categoryProducts) : 0;
+                        
+                        // Map category names to image files
+                        $categoryName = strtolower(trim($category['name']));
+                        $categoryImageMap = [
+                            'aromatic' => 'aromatic.jpg',
+                            'citrus' => 'citrus.jpg',
+                            'designer' => 'designer.jpg',
+                            'eau de cologne' => 'eau-de-cologne.jpg',
+                            'eau de parfum' => 'eau-de-parfum.jpg',
+                            'eau de toilette' => 'eau-de-toilette.jpg',
+                            'female fragrances' => 'female-fragrances.jpg',
+                            'women fragrances' => 'female-fragrances.jpg',
+                            'women\'s fragrances' => 'female-fragrances.jpg',
+                            'floral' => 'floral.jpg',
+                            'fresh' => 'fresh.jpg',
+                            'male fragrances' => 'male-fragrances.jpg',
+                            'men fragrances' => 'male-fragrances.jpg',
+                            'men\'s fragrances' => 'male-fragrances.jpg',
+                            'niche' => 'niche.jpg',
+                            'oriental' => 'oriental.jpg',
+                            'spicy' => 'spicy.jpg',
+                            'unisex fragrances' => 'unisex-fragrances.jpg'
+                        ];
+                        
+                        // Get the image file for this category
+                        $categoryImage = isset($categoryImageMap[$categoryName]) 
+                            ? 'category-images/' . $categoryImageMap[$categoryName]
+                            : null;
+                        
+                        // Use database image if available, otherwise use mapped image
+                        $imageToUse = !empty($category['image']) 
+                            ? normalize_image_path($category['image'])
+                            : ($categoryImage ? $categoryImage : '/placeholder.svg?height=400&width=350');
                         ?>
                         <a href="shop.php?category=<?php echo $category['id']; ?>" class="category-card">
                             <div class="category-image">
-                                <?php if (!empty($category['image'])): ?>
-                                    <img src="<?php echo htmlspecialchars(normalize_image_path($category['image'])); ?>" alt="<?php echo htmlspecialchars($category['name']); ?>">
-                                <?php else: ?>
-                                    <img src="/placeholder.svg?height=400&width=350" alt="<?php echo htmlspecialchars($category['name']); ?>">
-                                <?php endif; ?>
+                                <img src="<?php echo htmlspecialchars($imageToUse); ?>" alt="<?php echo htmlspecialchars($category['name']); ?>">
                             </div>
                             <div class="category-info">
                                 <h3><?php echo htmlspecialchars($category['name']); ?></h3>
