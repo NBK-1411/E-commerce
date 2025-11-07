@@ -104,35 +104,34 @@ function normalize_image_path($image_path) {
         return $image_path;
     }
     
-    // Get the project root path using SCRIPT_NAME which is more reliable
+    // Get the project root path - works for both local and live server
     $script_name = $_SERVER['SCRIPT_NAME'];
-    $base_path = dirname($script_name);
+    $script_dir = dirname($_SERVER['SCRIPT_FILENAME']);
+    $doc_root = $_SERVER['DOCUMENT_ROOT'];
     
-    // If we're at root level, get the project folder name
-    if ($base_path === '/' || $base_path === '.' || empty($base_path)) {
-        // Get the project folder name from the script directory
-        $real_script_dir = dirname($_SERVER['SCRIPT_FILENAME']);
-        $real_doc_root = $_SERVER['DOCUMENT_ROOT'];
-        $relative_path = str_replace($real_doc_root, '', $real_script_dir);
-        $base_path = rtrim($relative_path, '/') ?: '';
-    } else {
-        // Remove the subdirectory (like /public) to get project root
-        // Go up until we find index.php
-        $script_dir = dirname($_SERVER['SCRIPT_FILENAME']);
-        $doc_root = $_SERVER['DOCUMENT_ROOT'];
-        
-        // Find project root by looking for index.php
-        $project_root = '';
-        $current_dir = $script_dir;
-        while ($current_dir !== $doc_root && $current_dir !== dirname($current_dir)) {
-            if (file_exists($current_dir . '/index.php')) {
-                $project_root = str_replace($doc_root, '', $current_dir);
-                break;
-            }
-            $current_dir = dirname($current_dir);
+    // Find project root by looking for index.php
+    $project_root = '';
+    $current_dir = $script_dir;
+    while ($current_dir !== $doc_root && $current_dir !== dirname($current_dir)) {
+        if (file_exists($current_dir . '/index.php')) {
+            $project_root = str_replace($doc_root, '', $current_dir);
+            break;
         }
-        
-        $base_path = rtrim($project_root, '/') ?: '';
+        $current_dir = dirname($current_dir);
+    }
+    
+    $base_path = rtrim($project_root, '/') ?: '';
+    
+    // Normalize the path - handle both formats:
+    // 1. /uploads/u{userId}/p{productId}/image.jpg (with leading slash)
+    // 2. uploads/u{userId}/p{productId}/image.jpg (without leading slash)
+    
+    // Remove leading slash if present for consistent handling
+    $normalized_path = ltrim($image_path, '/');
+    
+    // If it starts with 'uploads/', prepend project root and add leading slash
+    if (substr($normalized_path, 0, 8) === 'uploads/') {
+        return $base_path . '/' . $normalized_path;
     }
     
     // If path starts with /uploads/, prepend project root

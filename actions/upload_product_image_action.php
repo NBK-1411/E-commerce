@@ -151,8 +151,9 @@ try {
         exit;
     }
     
-    // Return relative path from project root
-    $relative_path = '/uploads/u' . $user_id;
+    // Return relative path from project root (without leading slash for consistency)
+    // Format: uploads/u{userId}/p{productId}/filename.ext or uploads/u{userId}/temp/filename.ext
+    $relative_path = 'uploads/u' . $user_id;
     if ($product_id > 0) {
         $relative_path .= '/p' . $product_id;
     } else {
