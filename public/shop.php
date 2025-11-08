@@ -333,7 +333,13 @@ if ($base_path === '/' || $base_path === '.' || empty($base_path)) {
                             <?php if (!empty($perfume['image'])): ?>
                                 <?php 
                                 $raw_path = $perfume['image'];
-                                $normalized_path = '../' . $raw_path;
+                                // If it's already a full URL (http/https), use as-is
+                                // Otherwise prepend '../' for relative paths
+                                if (preg_match('/^https?:\/\//i', $raw_path)) {
+                                    $normalized_path = $raw_path;
+                                } else {
+                                    $normalized_path = '../' . $raw_path;
+                                }
                                 // Debug: uncomment to see paths
                                 // echo "<!-- Raw: " . htmlspecialchars($raw_path) . " | Normalized: " . htmlspecialchars($normalized_path) . " -->";
                                 ?>

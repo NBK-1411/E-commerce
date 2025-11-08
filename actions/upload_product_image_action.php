@@ -102,15 +102,14 @@ try {
         exit;
     }
     
-    // Store relative path in database (for compatibility with existing code)
-    // The remote server stores files at: http://169.239.251.102:442/~nana.hayford/uploads/
-    // But we store in DB as: uploads/filename.jpg (relative path)
-    $db_path = 'uploads/' . $filename;
+    // Build the remote URL path
+    $remote_filename = $filename;
+    $db_path = 'http://169.239.251.102:442/~nana.hayford/uploads/' . $remote_filename;
     
     json_response(true, 'Image uploaded successfully to remote server', [
         'path' => $db_path,
         'filename' => $filename,
-        'remote_url' => 'http://169.239.251.102:442/~nana.hayford/uploads/' . $filename
+        'remote_url' => $db_path
     ]);
     
 } catch (Exception $e) {
