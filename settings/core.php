@@ -115,7 +115,7 @@ function get_uploads_url($image_path = '') {
     return $uploads_base . '/' . $relative;
 }
 
-// Normalize image path for display - ensures uploads paths use the shared uploads directory
+// Normalize image path for display - maps uploads to remote server
 function normalize_image_path($image_path) {
     if (empty($image_path)) {
         return '';
@@ -128,9 +128,11 @@ function normalize_image_path($image_path) {
         return $image_path;
     }
 
-    // Handle uploads paths (with or without leading slash)
+    // Map uploads paths - just return the path as-is starting from uploads/
+    // Database: uploads/u3/p1/image.jpg
+    // Output: uploads/u3/p1/image.jpg (server handles the rest)
     if (strpos($image_path, '/uploads/') === 0 || strpos($image_path, 'uploads/') === 0) {
-        return get_uploads_url($image_path);
+        return ltrim($image_path, '/');
     }
 
     $base_url = get_base_url();
