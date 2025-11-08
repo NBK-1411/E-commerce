@@ -102,14 +102,20 @@ try {
         exit;
     }
     
-    // Build the remote URL path
-    $remote_filename = $filename;
-    $db_path = 'http://169.239.251.102:442/~nana.hayford/uploads/' . $remote_filename;
+    // Store path in old format for compatibility: uploads/u{user_id}/p{product_id}/filename.jpg
+    // Even though file is on remote server, we use this path format for display logic
+    $db_path = 'uploads/u' . $user_id;
+    if ($product_id > 0) {
+        $db_path .= '/p' . $product_id;
+    } else {
+        $db_path .= '/temp';
+    }
+    $db_path .= '/' . $filename;
     
     json_response(true, 'Image uploaded successfully to remote server', [
         'path' => $db_path,
         'filename' => $filename,
-        'remote_url' => $db_path
+        'remote_url' => 'http://169.239.251.102:442/~nana.hayford/uploads/' . $filename
     ]);
     
 } catch (Exception $e) {
