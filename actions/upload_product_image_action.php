@@ -102,20 +102,13 @@ try {
         exit;
     }
     
-    // Store path with directory structure: uploads/u{user_id}/p{product_id}/filename.jpg
-    // Remote server maintains the same directory structure
-    $db_path = 'uploads/u' . $user_id;
-    if ($product_id > 0) {
-        $db_path .= '/p' . $product_id;
-    } else {
-        $db_path .= '/temp';
-    }
-    $db_path .= '/' . $filename;
+    // Store simple path: uploads/filename.jpg
+    $db_path = 'uploads/' . $filename;
     
     json_response(true, 'Image uploaded successfully to remote server', [
         'path' => $db_path,
         'filename' => $filename,
-        'remote_url' => 'http://169.239.251.102:442/~nana.hayford/' . $db_path
+        'remote_url' => 'http://169.239.251.102:442/~nana.hayford/uploads/' . $filename
     ]);
     
 } catch (Exception $e) {
