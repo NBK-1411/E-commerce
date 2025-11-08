@@ -1,7 +1,7 @@
 <?php
 /**
- * Lab requirement: Upload product images to uploads/ folder
- * Path structure: uploads/u{user_id}/p{product_id}/image_name.png
+ * Upload product images to remote server
+ * Remote URL: http://169.239.251.102:442/~nana.hayford/upload.php
  */
 
 error_reporting(E_ALL);
@@ -52,84 +52,7 @@ try {
         exit;
     }
     
-    // Lab requirement: Verify uploads folder exists (created by server admin)
-    // Use helper function to get uploads path - works on both local and live servers
-    // (core.php is already required at the top of this file)
-    $uploads_base = get_uploads_path();
-    if (!is_dir($uploads_base)) {
-        json_response(false, 'Uploads folder not found. Please contact server administrator', []);
-        exit;
-    }
-    
-    // Verify uploads base directory is writable
-    if (!is_writable($uploads_base)) {
-        error_log("Uploads base directory is not writable: {$uploads_base}");
-        json_response(false, 'Uploads folder is not writable. Please check server permissions.', []);
-        exit;
-    }
-    
-    // Lab requirement: Create user directory structure inside uploads/
-    // Structure: uploads/u{user_id}/p{product_id}/image_name.png
-    $user_dir = $uploads_base . '/u' . $user_id;
-    if (!is_dir($user_dir)) {
-        if (!@mkdir($user_dir, 0755, true)) {
-            $error = error_get_last();
-            $errorMsg = $error ? $error['message'] : 'Unknown error';
-            error_log("Failed to create user directory: {$user_dir}. Error: {$errorMsg}");
-            json_response(false, 'Failed to create user directory. Please check server permissions.', []);
-            exit;
-        }
-        // Verify directory was created
-        if (!is_dir($user_dir)) {
-            error_log("User directory still does not exist after mkdir: {$user_dir}");
-            json_response(false, 'Failed to create user directory. Directory creation failed.', []);
-            exit;
-        }
-    }
-    
-    // Verify write permissions on user directory
-    if (!is_writable($user_dir)) {
-        error_log("User directory is not writable: {$user_dir}");
-        json_response(false, 'User directory is not writable. Please check server permissions.', []);
-        exit;
-    }
-    
-    // If product_id is provided, create product subdirectory
-    if ($product_id > 0) {
-        $product_dir = $user_dir . '/p' . $product_id;
-        if (!is_dir($product_dir)) {
-            if (!@mkdir($product_dir, 0755, true)) {
-                $error = error_get_last();
-                $errorMsg = $error ? $error['message'] : 'Unknown error';
-                error_log("Failed to create product directory: {$product_dir}. Error: {$errorMsg}");
-                json_response(false, 'Failed to create product directory. Please check server permissions.', []);
-                exit;
-            }
-        }
-        $target_dir = $product_dir;
-    } else {
-        // If no product_id yet (during creation), use temp directory
-        $temp_dir = $user_dir . '/temp';
-        if (!is_dir($temp_dir)) {
-            if (!@mkdir($temp_dir, 0755, true)) {
-                $error = error_get_last();
-                $errorMsg = $error ? $error['message'] : 'Unknown error';
-                error_log("Failed to create temp directory: {$temp_dir}. Error: {$errorMsg}");
-                json_response(false, 'Failed to create temp directory. Please check server permissions.', []);
-                exit;
-            }
-        }
-        $target_dir = $temp_dir;
-    }
-    
-    // Verify target directory is writable
-    if (!is_writable($target_dir)) {
-        error_log("Target directory is not writable: {$target_dir}");
-        json_response(false, 'Target directory is not writable. Please check server permissions.', []);
-        exit;
-    }
-    
-    // Generate unique filename
+    // Generate unique filename for remote upload
     $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
     $base_name = pathinfo($file['name'], PATHINFO_FILENAME);
     $base_name = preg_replace('/[^a-zA-Z0-9_-]/', '', $base_name); // Sanitize filename
@@ -179,14 +102,15 @@ try {
         exit;
     }
     
-    // Build the remote URL path
-    $remote_filename = $filename;
-    $db_path = 'http://169.239.251.102:442/~nana.hayford/uploads/' . $remote_filename;
+    // Store relative path in database (for compatibility with existing code)
+    // The remote server stores files at: http://169.239.251.102:442/~nana.hayford/uploads/
+    // But we store in DB as: uploads/filename.jpg (relative path)
+    $db_path = 'uploads/' . $filename;
     
     json_response(true, 'Image uploaded successfully to remote server', [
         'path' => $db_path,
         'filename' => $filename,
-        'remote_url' => $db_path
+        'remote_url' => 'http://169.239.251.102:442/~nana.hayford/uploads/' . $filename
     ]);
     
 } catch (Exception $e) {

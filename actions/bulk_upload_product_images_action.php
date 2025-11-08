@@ -123,16 +123,23 @@ try {
             continue;
         }
         
-        // Build the remote URL path (assuming remote server stores in uploads/)
-        $remote_filename = basename($file_name);
-        $db_path = 'http://169.239.251.102:442/~nana.hayford/uploads/' . $remote_filename;
+        // Generate unique filename for this upload
+        $extension = pathinfo($file_name, PATHINFO_EXTENSION);
+        $base_name = pathinfo($file_name, PATHINFO_FILENAME);
+        $base_name = preg_replace('/[^a-zA-Z0-9_-]/', '', $base_name);
+        $unique_filename = $base_name . '_' . time() . '_' . uniqid() . '.' . $extension;
+        
+        // Store relative path in database (for compatibility with existing code)
+        // The remote server stores files at: http://169.239.251.102:442/~nana.hayford/uploads/
+        // But we store in DB as: uploads/filename.jpg (relative path)
+        $db_path = 'uploads/' . $unique_filename;
         
         $results[] = [
             'filename' => $file_name,
             'success' => true,
             'path' => $db_path,
-            'saved_as' => $remote_filename,
-            'remote_url' => $db_path
+            'saved_as' => $unique_filename,
+            'remote_url' => 'http://169.239.251.102:442/~nana.hayford/uploads/' . $unique_filename
         ];
         $success_count++;
     }
