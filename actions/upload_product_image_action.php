@@ -102,8 +102,8 @@ try {
         exit;
     }
     
-    // Store path in old format for compatibility: uploads/u{user_id}/p{product_id}/filename.jpg
-    // Even though file is on remote server, we use this path format for display logic
+    // Store path with directory structure: uploads/u{user_id}/p{product_id}/filename.jpg
+    // Remote server maintains the same directory structure
     $db_path = 'uploads/u' . $user_id;
     if ($product_id > 0) {
         $db_path .= '/p' . $product_id;
@@ -115,7 +115,7 @@ try {
     json_response(true, 'Image uploaded successfully to remote server', [
         'path' => $db_path,
         'filename' => $filename,
-        'remote_url' => 'http://169.239.251.102:442/~nana.hayford/uploads/' . $filename
+        'remote_url' => 'http://169.239.251.102:442/~nana.hayford/' . $db_path
     ]);
     
 } catch (Exception $e) {

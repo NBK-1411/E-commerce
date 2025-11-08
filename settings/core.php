@@ -129,12 +129,12 @@ function normalize_image_path($image_path) {
     }
 
     // Handle uploads paths - map to remote server
-    // Database stores: uploads/u1/p5/image_123.jpg
-    // Remote server has: http://169.239.251.102:442/~nana.hayford/uploads/image_123.jpg
+    // Database stores: uploads/u3/p1/image.jpg
+    // Remote server has: http://169.239.251.102:442/~nana.hayford/uploads/u3/p1/image.jpg
     if (strpos($image_path, '/uploads/') === 0 || strpos($image_path, 'uploads/') === 0) {
-        // Extract just the filename from the path
-        $filename = basename($image_path);
-        return 'http://169.239.251.102:442/~nana.hayford/uploads/' . $filename;
+        // Remove leading slash if present
+        $clean_path = ltrim($image_path, '/');
+        return 'http://169.239.251.102:442/~nana.hayford/' . $clean_path;
     }
 
     $base_url = get_base_url();
