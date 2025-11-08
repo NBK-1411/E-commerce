@@ -115,7 +115,7 @@ function get_uploads_url($image_path = '') {
     return $uploads_base . '/' . $relative;
 }
 
-// Normalize image path for display - ensures uploads paths use the remote server
+// Normalize image path for display - ensures uploads paths use the shared uploads directory
 function normalize_image_path($image_path) {
     if (empty($image_path)) {
         return '';
@@ -128,13 +128,9 @@ function normalize_image_path($image_path) {
         return $image_path;
     }
 
-    // Handle uploads paths - map to remote server
-    // Database stores: uploads/u3/p1/image.jpg
-    // Remote server has: http://169.239.251.102:442/~nana.hayford/uploads/u3/p1/image.jpg
+    // Handle uploads paths (with or without leading slash)
     if (strpos($image_path, '/uploads/') === 0 || strpos($image_path, 'uploads/') === 0) {
-        // Remove leading slash if present
-        $clean_path = ltrim($image_path, '/');
-        return 'http://169.239.251.102:442/~nana.hayford/' . $clean_path;
+        return get_uploads_url($image_path);
     }
 
     $base_url = get_base_url();
