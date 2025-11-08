@@ -333,7 +333,7 @@ if ($base_path === '/' || $base_path === '.' || empty($base_path)) {
                             <?php if (!empty($perfume['image'])): ?>
                                 <?php 
                                 $raw_path = $perfume['image'];
-                                $normalized_path = '../' . $raw_path;
+                                $normalized_path = normalize_image_path($raw_path);
                                 // Debug: uncomment to see paths
                                 // echo "<!-- Raw: " . htmlspecialchars($raw_path) . " | Normalized: " . htmlspecialchars($normalized_path) . " -->";
                                 ?>

@@ -307,7 +307,7 @@ if (isset($_GET['welcome']) && $_GET['welcome'] == 1 && is_logged_in()) {
                     <div class="product-card">
                         <div class="product-image">
                             <?php if (!empty($perfume['image'])): ?>
-                                <img src="<?php echo htmlspecialchars($perfume['image']); ?>" 
+                                <img src="<?php echo htmlspecialchars(normalize_image_path($perfume['image'])); ?>" 
                                      alt="<?php echo htmlspecialchars($perfume['name']); ?>" 
                                      onerror="this.onerror=null; this.src='<?php echo htmlspecialchars($base_path); ?>/placeholder.svg?height=400&width=300';"
                                      style="width: 100%; height: 300px; object-fit: cover;">
