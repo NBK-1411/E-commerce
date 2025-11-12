@@ -14,7 +14,9 @@ function is_admin() {
 // Require login
 function require_login() {
     if (!is_logged_in()) {
-        header('Location: /public/login.php');
+        $project_root = get_project_root_web_path();
+        $login_path = rtrim($project_root, '/') . '/public/login.php';
+        header('Location: ' . $login_path);
         exit;
     }
 }
@@ -22,7 +24,9 @@ function require_login() {
 // Require admin
 function require_admin() {
     if (!is_admin()) {
-        header('Location: /index.php');
+        $project_root = get_project_root_web_path();
+        $index_path = rtrim($project_root, '/') . '/index.php';
+        header('Location: ' . $index_path);
         exit;
     }
 }

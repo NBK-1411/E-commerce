@@ -21,11 +21,11 @@ $total = $cartController->getTotal();
     <!-- Header -->
     <header class="bg-white shadow">
         <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-            <a href="/index.php" class="text-2xl font-serif font-bold text-slate-900">Perfume Shop</a>
+            <a href="../index.php" class="text-2xl font-serif font-bold text-slate-900">Perfume Shop</a>
             <nav class="flex gap-6 items-center">
-                <a href="/public/shop.php" class="text-slate-700 hover:text-amber-600">Shop</a>
+                <a href="shop.php" class="text-slate-700 hover:text-amber-600">Shop</a>
                 <span class="text-slate-600">Welcome, <?php echo htmlspecialchars(get_current_customer()['customer_name'] ?? 'User'); ?></span>
-                <a href="/public/cart.php" class="text-slate-700 hover:text-amber-600 font-semibold">Cart</a>
+                <a href="cart.php" class="text-slate-700 hover:text-amber-600 font-semibold">Cart</a>
                 <a href="../actions/logout.php" class="text-slate-700 hover:text-amber-600">Logout</a>
             </nav>
         </div>
@@ -37,7 +37,7 @@ $total = $cartController->getTotal();
         <?php if (empty($items)): ?>
             <div class="bg-white rounded-lg shadow p-8 text-center">
                 <p class="text-slate-600 text-lg mb-4">Your cart is empty</p>
-                <a href="/public/shop.php" class="inline-block px-6 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold">Continue Shopping</a>
+                <a href="shop.php" class="inline-block px-6 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold">Continue Shopping</a>
             </div>
         <?php else: ?>
             <div class="grid grid-cols-3 gap-8">
@@ -94,10 +94,10 @@ $total = $cartController->getTotal();
                         <span class="text-lg font-semibold text-slate-900">Total</span>
                         <span class="text-lg font-bold text-amber-600">$<?php echo number_format($total, 2); ?></span>
                     </div>
-                    <a href="/public/checkout.php" class="block w-full px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold text-center transition">
+                    <a href="checkout.php" class="block w-full px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold text-center transition">
                         Proceed to Checkout
                     </a>
-                    <a href="/public/shop.php" class="block w-full mt-3 px-6 py-3 border border-slate-300 text-slate-900 rounded-lg font-semibold text-center hover:bg-slate-50 transition">
+                    <a href="shop.php" class="block w-full mt-3 px-6 py-3 border border-slate-300 text-slate-900 rounded-lg font-semibold text-center hover:bg-slate-50 transition">
                         Continue Shopping
                     </a>
                 </div>
@@ -113,7 +113,7 @@ $total = $cartController->getTotal();
             formData.append('product_id', productId);
 
             try {
-                const response = await fetch('/actions/remove_from_cart_action.php', {
+                const response = await fetch('../actions/remove_from_cart_action.php', {
                     method: 'POST',
                     body: formData
                 });
@@ -135,7 +135,7 @@ $total = $cartController->getTotal();
             formData.append('quantity', quantity);
 
             try {
-                const response = await fetch('/actions/update_cart_action.php', {
+                const response = await fetch('../actions/update_cart_action.php', {
                     method: 'POST',
                     body: formData
                 });

@@ -11,7 +11,7 @@ $items = $cartController->getItems();
 $total = $cartController->getTotal();
 
 if (empty($items)) {
-    header('Location: /public/cart.php');
+    header('Location: cart.php');
     exit;
 }
 ?>
@@ -27,9 +27,9 @@ if (empty($items)) {
     <!-- Header -->
     <header class="bg-white shadow">
         <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-            <a href="/index.php" class="text-2xl font-serif font-bold text-slate-900">Perfume Shop</a>
+            <a href="../index.php" class="text-2xl font-serif font-bold text-slate-900">Perfume Shop</a>
             <nav class="flex gap-6 items-center">
-                <a href="/public/shop.php" class="text-slate-700 hover:text-amber-600">Shop</a>
+                <a href="shop.php" class="text-slate-700 hover:text-amber-600">Shop</a>
                 <span class="text-slate-600">Welcome, <?php echo htmlspecialchars(get_current_customer()['customer_name'] ?? 'User'); ?></span>
                 <a href="../actions/logout.php" class="text-slate-700 hover:text-amber-600">Logout</a>
             </nav>
@@ -109,7 +109,7 @@ if (empty($items)) {
             const messageDiv = document.getElementById('message');
 
             try {
-                const response = await fetch('/actions/checkout_action.php', {
+                const response = await fetch('../actions/checkout_action.php', {
                     method: 'POST',
                     body: formData
                 });
@@ -121,7 +121,7 @@ if (empty($items)) {
                     messageDiv.className = 'p-4 rounded-lg text-sm bg-green-100 text-green-700';
                     messageDiv.textContent = 'Order placed successfully! Redirecting...';
                     setTimeout(() => {
-                        window.location.href = '/public/orders.php';
+                        window.location.href = 'orders.php';
                     }, 2000);
                 } else {
                     messageDiv.className = 'p-4 rounded-lg text-sm bg-red-100 text-red-700';

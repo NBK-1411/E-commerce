@@ -20,11 +20,11 @@ $orders = $orderController->getByCustomer($customer_id);
     <!-- Header -->
     <header class="bg-white shadow">
         <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-            <a href="/index.php" class="text-2xl font-serif font-bold text-slate-900">Perfume Shop</a>
+            <a href="../index.php" class="text-2xl font-serif font-bold text-slate-900">Perfume Shop</a>
             <nav class="flex gap-6 items-center">
-                <a href="/public/shop.php" class="text-slate-700 hover:text-amber-600">Shop</a>
+                <a href="shop.php" class="text-slate-700 hover:text-amber-600">Shop</a>
                 <span class="text-slate-600">Welcome, <?php echo htmlspecialchars(get_current_customer()['customer_name'] ?? 'User'); ?></span>
-                <a href="/public/cart.php" class="text-slate-700 hover:text-amber-600">Cart</a>
+                <a href="cart.php" class="text-slate-700 hover:text-amber-600">Cart</a>
                 <a href="../actions/logout.php" class="text-slate-700 hover:text-amber-600">Logout</a>
             </nav>
         </div>
@@ -36,7 +36,7 @@ $orders = $orderController->getByCustomer($customer_id);
         <?php if (empty($orders)): ?>
             <div class="bg-white rounded-lg shadow p-8 text-center">
                 <p class="text-slate-600 text-lg mb-4">You haven't placed any orders yet</p>
-                <a href="/public/shop.php" class="inline-block px-6 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold">Start Shopping</a>
+                <a href="shop.php" class="inline-block px-6 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold">Start Shopping</a>
             </div>
         <?php else: ?>
             <div class="space-y-4">
