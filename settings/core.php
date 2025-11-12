@@ -14,9 +14,13 @@ function is_admin() {
 // Require login
 function require_login() {
     if (!is_logged_in()) {
-        $project_root = get_project_root_web_path();
-        $login_path = rtrim($project_root, '/') . '/public/login.php';
-        header('Location: ' . $login_path);
+        // Simple check: if we're in public directory, login is in same directory
+        $script_dir = dirname($_SERVER['SCRIPT_NAME'] ?? '');
+        if (strpos($script_dir, 'public') !== false) {
+            header('Location: login.php');
+        } else {
+            header('Location: public/login.php');
+        }
         exit;
     }
 }
@@ -24,9 +28,13 @@ function require_login() {
 // Require admin
 function require_admin() {
     if (!is_admin()) {
-        $project_root = get_project_root_web_path();
-        $index_path = rtrim($project_root, '/') . '/index.php';
-        header('Location: ' . $index_path);
+        // Simple check: if we're in public directory, index is one level up
+        $script_dir = dirname($_SERVER['SCRIPT_NAME'] ?? '');
+        if (strpos($script_dir, 'public') !== false) {
+            header('Location: ../index.php');
+        } else {
+            header('Location: index.php');
+        }
         exit;
     }
 }
