@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../settings/core.php';
 
 if (is_logged_in()) {
-    header('Location: /index.php');
+    header('Location: ../index.php');
     exit;
 }
 ?>
@@ -40,7 +40,7 @@ if (is_logged_in()) {
                 </form>
 
                 <p class="text-center text-slate-600 mt-6">
-                    Don't have an account? <a href="/public/register.php" class="text-amber-600 hover:text-amber-700 font-semibold">Register here</a>
+                    Don't have an account? <a href="register.php" class="text-amber-600 hover:text-amber-700 font-semibold">Register here</a>
                 </p>
             </div>
         </div>
@@ -53,10 +53,14 @@ if (is_logged_in()) {
             const messageDiv = document.getElementById('message');
 
             try {
-                const response = await fetch('/actions/login_action.php', {
+                const response = await fetch('../actions/login_action.php', {
                     method: 'POST',
                     body: formData
                 });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
 
                 const data = await response.json();
                 messageDiv.classList.remove('hidden');
@@ -65,16 +69,17 @@ if (is_logged_in()) {
                     messageDiv.className = 'p-4 rounded-lg text-sm bg-green-100 text-green-700';
                     messageDiv.textContent = 'Login successful! Redirecting...';
                     setTimeout(() => {
-                        window.location.href = '/index.php';
+                        window.location.href = '../index.php';
                     }, 1500);
                 } else {
                     messageDiv.className = 'p-4 rounded-lg text-sm bg-red-100 text-red-700';
-                    messageDiv.textContent = data.message;
+                    messageDiv.textContent = data.message || 'Login failed. Please try again.';
                 }
             } catch (error) {
                 messageDiv.classList.remove('hidden');
                 messageDiv.className = 'p-4 rounded-lg text-sm bg-red-100 text-red-700';
-                messageDiv.textContent = 'An error occurred. Please try again.';
+                messageDiv.textContent = 'An error occurred. Please check your connection and try again.';
+                console.error('Login error:', error);
             }
         });
     </script>
