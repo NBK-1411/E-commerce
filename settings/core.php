@@ -14,12 +14,12 @@ function is_admin() {
 // Require login
 function require_login() {
     if (!is_logged_in()) {
-        // Simple check: if we're in public directory, login is in same directory
+        // Always redirect to root login.php
         $script_dir = dirname($_SERVER['SCRIPT_NAME'] ?? '');
         if (strpos($script_dir, 'public') !== false) {
-            header('Location: login.php');
+            header('Location: ../login.php');
         } else {
-            header('Location: public/login.php');
+            header('Location: login.php');
         }
         exit;
     }
