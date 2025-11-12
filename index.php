@@ -505,12 +505,9 @@ if (isset($_GET['welcome']) && $_GET['welcome'] == 1 && is_logged_in()) {
                         const currentCount = parseInt(cartCount.textContent) || 0;
                         cartCount.textContent = currentCount + 1;
                     }
-                    alert('Added to cart!');
-                } else {
-                    alert(data.message);
                 }
             } catch (error) {
-                alert('Error adding to cart');
+                console.error('Error adding to cart:', error);
             }
         }
     </script>

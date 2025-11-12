@@ -476,13 +476,9 @@ if ($base_path === '/' || $base_path === '.' || empty($base_path)) {
                         const currentCount = parseInt(cartCount.textContent) || 0;
                         cartCount.textContent = currentCount + 1;
                     }
-                    alert('Added to cart!');
-                } else {
-                    alert(data.message || 'Failed to add to cart');
                 }
             } catch (error) {
                 console.error('Error adding to cart:', error);
-                alert('Error adding to cart');
             }
         }
     </script>
